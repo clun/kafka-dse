@@ -1,0 +1,88 @@
+version: '3'
+
+services:
+
+ # --------------------------------
+ # DataStax Enterprise
+ # --------------------------------
+   dse:
+    image: datastax/dse-server:6.0.2
+    command: [ -s ]
+    ports:
+      - "9042:9042" # cassandra
+    environment:
+      DS_LICENSE: accept
+    volumes:
+      - "/tmp/docker/cassandra:/var/lib/cassandra"
+    cap_add:
+      - IPC_LOCK
+    ulimits:
+      memlock: -1
+      
+   # One instance of DataStax Studio
+   studio:
+    image: datastax/dse-studio:6.0.0
+    ports:
+      - "9091:9091"
+    depends_on:
+      - dse
+    environment:
+      DS_LICENSE: accept
+    volumes:
+      - "/tmp/docker/studio-notebooks:/var/lib/datastax-studio"
+
+   # Zookeeper
+   zookeeper:
+    image: confluentinc/cp-zookeeper:5.0.0
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - /tmp/docker/zookeeper-cp5/data:/var/lib/zookeeper/data
+      - /tmp/docker/zookeeper-cp5/log:/var/lib/zookeeper/log
+    networks:
+      devel:
+        aliases:
+          - zookeeper
+
+   kafka:
+    image: confluentinc/cp-kafka:5.0.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://192.168.0.10:9092'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    volumes:
+      - /tmp/docker/kafka-cp5:/var/lib/kafka/data
+    networks:
+      devel:
+        aliases:
+          - kafka
+
+   schema_registry:
+    image: confluentinc/cp-schema-registry:5.0.0
+    depends_on:
+      - zookeeper
+      - kafka
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema_registry
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:2181'
+    networks:
+      devel:
+        aliases:
+          - schema-registry
+          - schema_registry
+ 
+networks:
+  devel:
+    external:
+      name: devel        
