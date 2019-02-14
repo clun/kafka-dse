@@ -22,6 +22,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jnr.ffi.Struct.pid_t;
+
 /**
  * Consumer for CSV Tick.
  */
@@ -53,6 +55,7 @@ public class StockTicksConsumer implements Processor {
     /** {@inheritDoc} */
     public void process(Exchange exchange) throws Exception {
         StreamSupport.stream(kafkaConsumer.poll(100).spliterator(), false)
+        			 .peek(p ->  LOGGER.info("Polling"))
                      .map(this::mapAsStockData)
                      .forEach(dseDao::saveTicker);
     }

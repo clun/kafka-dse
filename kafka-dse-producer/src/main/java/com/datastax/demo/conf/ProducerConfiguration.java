@@ -28,9 +28,6 @@ public class ProducerConfiguration {
     @Value("${producer.kafka.server: localhost:9092 }")
     private String kafkaServer;
     
-    @Value("${producer.kafka.schemaregistry: http://localhost:8081 }")
-    private String kafkaSchemaRegistryUrl;
-    
     @Value("${producer.kafka.ack: 1 }")
     private String producerAck;
     
@@ -43,7 +40,6 @@ public class ProducerConfiguration {
         props.put(BOOTSTRAP_SERVERS_CONFIG,      kafkaServer);
         props.put(KEY_SERIALIZER_CLASS_CONFIG,   StringSerializer.class.getName());
         props.put(VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class.getName());
-        //props.put(SCHEMA_REGISTRY_URL_CONFIG,    kafkaSchemaRegistryUrl);
         props.put(ACKS_CONFIG,                   producerAck);
         return new KafkaProducer<String, JsonNode>(props);
     }

@@ -15,8 +15,7 @@ import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.QueryOptions;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.policies.DCAwareRoundRobinPolicy;
-import com.datastax.driver.core.policies.TokenAwarePolicy;
+import com.datastax.driver.core.schemabuilder.SchemaBuilder;
 import com.datastax.driver.dse.DseCluster.Builder;
 import com.datastax.driver.dse.DseSession;
 import com.datastax.driver.dse.auth.DsePlainTextAuthProvider;
@@ -25,6 +24,7 @@ import com.datastax.driver.mapping.MappingConfiguration;
 import com.datastax.driver.mapping.MappingManager;
 import com.datastax.driver.mapping.PropertyMapper;
 import com.datastax.driver.mapping.PropertyTransienceStrategy;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * Connectivity to DSE (cassandra, graph, search).
@@ -50,7 +50,7 @@ public class DseConfiguration {
     @Value("${dse.password}")
     public Optional < String > dsePassword;
     
-    @Value("${dse.localdc}")
+    @Value("${dse.localdc} : dc1")
     public String localDc;
     
     @Bean
@@ -74,14 +74,25 @@ public class DseConfiguration {
         clusterConfig.withQueryOptions(
                 new QueryOptions().setConsistencyLevel(ConsistencyLevel.QUORUM));
         
-        // LOAD BALANCING
-        clusterConfig.withLoadBalancingPolicy(
-                new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().withLocalDc(localDc).build()));
-        
         // Long <-> Timestamp
         clusterConfig.withCodecRegistry(new CodecRegistry().register(new LongToTimeStampCodec()));
         
         try {
+        	// First Connect without Keyspace (to create if needed)
+        	DseSession tmpSession = null;
+        	try {
+	        	tmpSession = clusterConfig.build().connect();
+	        	tmpSession.execute(SchemaBuilder.createKeyspace(keyspace)
+	                    .ifNotExists().with()
+	                    .replication(ImmutableMap.of("class", "SimpleStrategy", "replication_factor", 1)));
+        		LOGGER.info(" + Creating keyspace '{}' (if needed)", keyspace);
+        	} finally {
+        		if (tmpSession != null) {
+        			tmpSession.close();
+        		}
+        	}
+        	
+        	// Real Connection now
             DseSession dseSession = clusterConfig.build().connect(keyspace);
             LOGGER.info(" + Connection established to DSE Cluster \\_0_/ in {} millis.", System.currentTimeMillis() - top);
             return dseSession;

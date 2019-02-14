@@ -68,7 +68,7 @@ public class DseDao implements DseConstants {
                 .withOptions()
                 .clusteringOrder("name", Direction.ASC)
                 .buildInternal());
-        LOGGER.info(" + Table '{}' created in keyspace {} (if needed)", STOCKS_INFOS, dseSession.getLoggedKeyspace());
+        LOGGER.info(" + Table '{}' created in keyspace '{}' (if needed)", STOCKS_INFOS, dseSession.getLoggedKeyspace());
         
         // Random ticks where seed is last AlphaVantage
         dseSession.execute(SchemaBuilder.createTable(STOCKS_TICKS)
@@ -79,14 +79,14 @@ public class DseDao implements DseConstants {
                 .withOptions()
                 .clusteringOrder("valueDate", Direction.DESC)
                 .buildInternal());
-        LOGGER.info(" + Table '{}' created in keyspace {} (if needed)", STOCKS_TICKS, dseSession.getLoggedKeyspace());
+        LOGGER.info(" + Table '{}' created in keyspace '{}' (if needed)", STOCKS_TICKS, dseSession.getLoggedKeyspace());
         
         // Create tables for histograms
         createTableStocksIntervalIfNotExist(STOCKS_MINUTE);
-        LOGGER.info(" + Table '{}' created in keyspace {} (if needed)", STOCKS_MINUTE, dseSession.getLoggedKeyspace());
+        LOGGER.info(" + Table '{}' created in keyspace '{}' (if needed)", STOCKS_MINUTE, dseSession.getLoggedKeyspace());
         
         createTableStocksIntervalIfNotExist(STOCKS_HOUR);
-        LOGGER.info(" + Table '{}' created in keyspace {} (if needed)", STOCKS_HOUR, dseSession.getLoggedKeyspace());
+        LOGGER.info(" + Table '{}' created in keyspace '{}' (if needed)", STOCKS_HOUR, dseSession.getLoggedKeyspace());
         
         // Init Mappers
         stockTicksMapper = mappingManager.mapper(StockTick.class);
@@ -95,9 +95,9 @@ public class DseDao implements DseConstants {
         // Load CSV and fill table 'stocks_infos'
         csvDao.readStockInfosFromCsv().forEach(this::saveStockInfo);
         LOGGER.info(" + Table '{}' filled with symbols found in CSV.", STOCKS_INFOS);
-        LOGGER.info("DSE Ready.", STOCKS_INFOS);
+        LOGGER.info("Connection successfully established to DSE and schema has been created.", STOCKS_INFOS);
     }
-
+    
     /**
      * Creation of tables stocks_by*
      */
