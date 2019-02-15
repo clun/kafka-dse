@@ -50,7 +50,7 @@ public class DseConfiguration {
     @Value("${dse.password}")
     public Optional < String > dsePassword;
     
-    @Value("${dse.localdc} : dc1")
+    @Value("${dse.localdc : dc1}")
     public String localDc;
     
     @Bean

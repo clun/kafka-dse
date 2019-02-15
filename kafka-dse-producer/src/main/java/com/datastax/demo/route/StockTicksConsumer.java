@@ -1,6 +1,7 @@
 package com.datastax.demo.route;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.PostConstruct;
@@ -21,8 +22,6 @@ import com.datastax.demo.domain.StockTick;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import jnr.ffi.Struct.pid_t;
 
 /**
  * Consumer for CSV Tick.
@@ -55,17 +54,27 @@ public class StockTicksConsumer implements Processor {
     /** {@inheritDoc} */
     public void process(Exchange exchange) throws Exception {
         StreamSupport.stream(kafkaConsumer.poll(100).spliterator(), false)
-        			 .peek(p ->  LOGGER.info("Polling"))
-                     .map(this::mapAsStockData)
+        			 .map(this::mapAsStockData)
+        			 .filter(Optional::isPresent)
+        			 .map(Optional::get)
                      .forEach(dseDao::saveTicker);
     }
     
-    public StockTick mapAsStockData(ConsumerRecord<String, JsonNode> msg) {
-        try {
-            return JACKSON_MAPPER.treeToValue(msg.value(), StockTick.class);
+    /**
+     * Skip invalid messages.
+     * 
+     * @param msg
+     * @return
+     */
+    public Optional<StockTick> mapAsStockData(ConsumerRecord<String, JsonNode> msg) {
+    	Optional<StockTick> result = Optional.empty();
+    	try {
+    		StockTick tick = JACKSON_MAPPER.treeToValue(msg.value(), StockTick.class);
+    		result = Optional.of(tick);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Cannot map nack as StockData");
+        	 LOGGER.warn("Message  " + msg.value().asText() + " cannot be processed");
         }
+        return result;
     }
    
 }

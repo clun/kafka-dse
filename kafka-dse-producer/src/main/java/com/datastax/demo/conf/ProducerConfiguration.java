@@ -25,13 +25,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 @Configuration
 public class ProducerConfiguration {
     
-    @Value("${producer.kafka.server: localhost:9092 }")
+    @Value("${kafka.server}")
     private String kafkaServer;
     
-    @Value("${producer.kafka.ack: 1 }")
+    @Value("${kafka.ack}")
     private String producerAck;
     
-    @Value("${consumer.kafka.group: tick-group }")
+    @Value("${kafka.group}")
     private String consumerGroup;
     
     @Bean("producer.json")

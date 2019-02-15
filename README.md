@@ -21,11 +21,6 @@ A `docker ps` command will list you the following containers :
 - **datastax/dse-studio:6.7.0** is the WebUI available 9091 [DataStax Studio ](http://localhost:9091)
 - **wurstmeister/zookeeper:3.4.6** is the Zookeeper ensuring consistency for Kafka (listening on 2181)
 - **wurstmeister/kafka:1.0.0**  the kafka server (listening on 9092)
-- **tchiotludo/kafkahq** an open source webui for Kafka on port 8080 [KafkaHQ_UI](http://localhost:8080/docker-kafka-server/topic)
-
-Capture of KafkaHQ:
-<img src="./pics/KafkaHQ.png"  />
-
 
 ### 2. Start the `kafka-dse-producer` component. 
 
@@ -36,12 +31,11 @@ Open the folder kafka-dse-producer :
 mvn spring-boot:run 
 ```
 
-This will create the `KeySpace` if needed, the tables to work with and fill the reference table `stocks_infos` with Data coming fron the CSV
+This will create the `KeySpace` `demo_kafka` if needed, the tables to work with and fill the reference table `stocks_infos` with Data coming fron the CSV
 
 This is a Camel Application with no UI, still you should access the [SpringBoot Administration Console](ttp://localhost:8088/admin#/wallboard)
 
-<img src="./pics/Producer.png"  />
-
+<img src="./pics/AdminConsole.png"  height="300px" />
 
 ### 3. Start the `kafka-dse-webui` component. 
 
@@ -53,7 +47,5 @@ mvn spring-boot:run
 ```
 
 [Access the web UI](http://localhost:8082)
-
-<img src="./pics/WebUI.png"  />
 
 

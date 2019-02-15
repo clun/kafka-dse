@@ -2,6 +2,13 @@
 # Spring Boot extra Config
 # ----------------------------------------------------------
 spring:
+  application:
+    name: WebUI for reactive streams
+  boot:
+    admin:
+      client:
+        url:
+        - "http://localhost:8088/admin" 
   messages:
     basename: messages
 server:

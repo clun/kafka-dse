@@ -21,6 +21,7 @@ public class KafkaDao {
      * @param jsonMsg
      */
     public void sendJsonMessage(ProducerRecord<String, JsonNode> jsonMsg) {
+    	System.out.println(jsonMsg.topic());
         jsonProducer.send(jsonMsg);
     }
 }

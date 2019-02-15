@@ -36,9 +36,10 @@ camel:
 # Apache KAFKA client infos
 # ---------------------------------------------------------------------------------
 kafka:
-  server: localhost:9092
+  server: 127.0.0.1:9092
   period: 2000
-  ack: 1
+  group: tick-group
+  ack: -1
   topics:
      ticks: stocks-ticks
    
