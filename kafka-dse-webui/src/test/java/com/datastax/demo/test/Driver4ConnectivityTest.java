@@ -5,30 +5,30 @@ package com.datastax.demo.test;
 @ExtendWith(SpringExtension.class)
 @TestPropertySource(locations="/config-test.properties")
 public class Driver4ConnectivityTest {
-    
+
     @Test
     @DisplayName("Read default application.conf file")
     public void testConnectDse() {
         //CqlSession.builder().withConfigLoader(configLoader)
         //DriverExecutionProfile defaultProfile = config.getDefaultProfile();
         //DriverExecutionProfile olapProfile = config.getProfile("olap");
-        
+
         try (CqlSession session = CqlSession.builder().build()) {
-            
+
           DriverConfig config = session.getContext().config();
           DriverExecutionProfile defaultProfile = config.getDefaultProfile();
           System.out.println(defaultProfile.getStringList(DefaultDriverOption.CONTACT_POINTS));
-          
-          ResultSet rs = session.execute("select release_version from system.local"); 
+
+          ResultSet rs = session.execute("select release_version from system.local");
           Row row = rs.one();
           System.out.println(row.getString("release_version"));
-           
+
           //DriverExecutionProfile olapProfile = config.getProfile("olap");
           //System.out.println(olapProfile.getString(DefaultDriverOption.REQUEST_TIMEOUT));
         }
-        
+
     }
-    
+
     @Test
     public void testAsyncDse() {
         CompletionStage<CqlSession> sessionStage = CqlSession.builder().buildAsync();
@@ -37,7 +37,7 @@ public class Driver4ConnectivityTest {
                 sessionStage.executeAsync("SELECT release_version FROM system.local");
         resultStage.thenAccept(resultSet -> System.out.println(Thread.currentThread().getName()));
     }
-    
+
     import com.datastax.driver.core.Cluster;
     import com.datastax.driver.core.ResultSet;
     import com.datastax.driver.core.ResultSetFuture;
@@ -151,5 +151,5 @@ public class Driver4ConnectivityTest {
         }
       }
     }
-    
+
 }*/
