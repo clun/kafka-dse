@@ -1,5 +1,7 @@
 package com.datastax.demo.conf;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+
 /**
  * Constants in DSE-DB Tables.
  *
@@ -7,17 +9,24 @@ package com.datastax.demo.conf;
  */
 public interface DseConstants {
 
-  /** Table Names in Keyspace (Columns are defined in Beans). */
-  String STOCKS_MINUTE = "stocks_by_min";
+  // Table names
 
-  String STOCKS_HOUR = "stocks_by_hour";
-  String STOCKS_DAY = "stocks_by_day";
+  CqlIdentifier STOCKS_MINUTE = CqlIdentifier.fromCql("stocks_by_min");
+  CqlIdentifier STOCKS_HOUR = CqlIdentifier.fromCql("stocks_by_hour");
+  CqlIdentifier STOCKS_TICKS = CqlIdentifier.fromCql("stocks_ticks");
+  CqlIdentifier STOCKS_INFOS = CqlIdentifier.fromCql("stocks_infos");
 
-  String STOCKS_TICKS = "stocks_ticks";
-  String STOCKS_INFOS = "stocks_infos";
+  // Column names
 
-  String TICKER_COL_EXCHANGE = "exchange";
-  String TICKER_COL_INDUSTRY = "industry";
-  String TICKER_COL_NAME = "name";
-  String TICKER_COL_SYMBOL = "symbol";
+  CqlIdentifier EXCHANGE = CqlIdentifier.fromCql("exchange");
+  CqlIdentifier NAME = CqlIdentifier.fromCql("name");
+  CqlIdentifier INDUSTRY = CqlIdentifier.fromCql("industry");
+  CqlIdentifier SYMBOL = CqlIdentifier.fromCql("symbol");
+  CqlIdentifier VALUE_DATE = CqlIdentifier.fromCql("value_date");
+  CqlIdentifier VALUE = CqlIdentifier.fromCql("value");
+  CqlIdentifier OPEN = CqlIdentifier.fromCql("open");
+  CqlIdentifier CLOSE = CqlIdentifier.fromCql("close");
+  CqlIdentifier HIGH = CqlIdentifier.fromCql("high");
+  CqlIdentifier LOW = CqlIdentifier.fromCql("low");
+  CqlIdentifier VOLUME = CqlIdentifier.fromCql("volume");
 }

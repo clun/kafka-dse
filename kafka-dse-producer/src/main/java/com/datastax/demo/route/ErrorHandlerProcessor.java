@@ -12,24 +12,22 @@ import org.springframework.stereotype.Component;
 public class ErrorHandlerProcessor extends RouteBuilder implements Processor {
 
   /** logger. */
-  private static Logger logger = LoggerFactory.getLogger(ErrorHandlerProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ErrorHandlerProcessor.class);
 
   /** {@inheritDoc} */
-  public void configure() throws Exception {
+  public void configure() {
     errorHandler(deadLetterChannel("seda:errors"));
     from("seda:errors").bean(this);
   }
 
-  /**
-   * @param exchange current camel exchange
-   * @throws Exception
-   */
-  public void process(Exchange exchange) throws Exception {
+  /** @param exchange current camel exchange */
+  @Override
+  public void process(Exchange exchange) {
     Exception cause = exchange.getProperty(Exchange.EXCEPTION_CAUGHT, Exception.class);
     if (cause != null) {
-      logger.error("A technical error has occurred: ", cause);
+      LOGGER.error("A technical error has occurred: ", cause);
     }
-    logger.error("ExchangeiD" + exchange.getExchangeId());
-    logger.error("Incoming" + exchange.getFromRouteId());
+    LOGGER.info("ExchangeID" + exchange.getExchangeId());
+    LOGGER.info("Incoming" + exchange.getFromRouteId());
   }
 }

@@ -1,40 +1,33 @@
 package com.datastax.demo.domain;
 
-import static com.datastax.demo.conf.DseConstants.STOCKS_TICKS;
-
-import com.datastax.driver.mapping.annotations.ClusteringColumn;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
+import java.time.Instant;
+import java.util.Objects;
 
 /** Value for Ticks. */
-@Table(name = STOCKS_TICKS)
 public class StockTick implements Serializable {
 
   /** serial. */
   private static final long serialVersionUID = 5806346188526710465L;
 
   /** code. */
-  @PartitionKey private String symbol;
+  private String symbol;
 
   /** Value Date. */
-  @ClusteringColumn private long valueDate;
+  private Instant valueDate;
 
   /** value. */
-  @Column private double value;
-
-  /** Default Constructor */
-  public StockTick() {}
+  private double value;
 
   /** Constructor with parameters. */
-  public StockTick(String tickSymbol, double value) {
-    this(tickSymbol, value, System.currentTimeMillis());
-  }
-
-  /** Constructor with parameters. */
-  public StockTick(String tickSymbol, double value, long valueDate) {
-    this.symbol = tickSymbol;
+  @JsonCreator
+  public StockTick(
+      @JsonProperty("symbol") String symbol,
+      @JsonProperty("valueDate") Instant valueDate,
+      @JsonProperty("value") double value) {
+    this.symbol = symbol;
     this.value = value;
     this.valueDate = valueDate;
   }
@@ -62,7 +55,7 @@ public class StockTick implements Serializable {
    *
    * @return current value of 'valueDate'
    */
-  public long getValueDate() {
+  public Instant getValueDate() {
     return valueDate;
   }
 
@@ -71,7 +64,7 @@ public class StockTick implements Serializable {
    *
    * @param valueDate new value for 'valueDate '
    */
-  public void setValueDate(long valueDate) {
+  public void setValueDate(Instant valueDate) {
     this.valueDate = valueDate;
   }
 
@@ -91,5 +84,37 @@ public class StockTick implements Serializable {
    */
   public void setSymbol(String symbol) {
     this.symbol = symbol;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    StockTick stockTick = (StockTick) o;
+    return Double.compare(stockTick.value, value) == 0
+        && symbol.equals(stockTick.symbol)
+        && valueDate.equals(stockTick.valueDate);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(symbol, valueDate, value);
+  }
+
+  @Override
+  public String toString() {
+    return "StockTick{"
+        + "symbol='"
+        + symbol
+        + '\''
+        + ", valueDate="
+        + valueDate
+        + ", value="
+        + value
+        + '}';
   }
 }

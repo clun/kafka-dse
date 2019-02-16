@@ -18,11 +18,9 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.platform.runner.JUnitPlatform;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,15 +43,14 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  *
  * @author cedricklunven
  */
-@RunWith(JUnitPlatform.class)
 @ExtendWith(SpringExtension.class)
 @TestPropertySource(locations = "/config-test.properties")
 @ContextConfiguration(classes = {KafkaDao.class, ProducerConfiguration.class})
-@Ignore
+@Disabled
 public class TestSendMessage {
 
   /** Json Jackson parser. */
-  protected static final ObjectMapper JACKSON_MAPPER = new ObjectMapper();
+  private static final ObjectMapper JACKSON_MAPPER = new ObjectMapper();
 
   @Value("${kafka.topics.ticks}")
   private String topicTicks;
@@ -67,11 +64,7 @@ public class TestSendMessage {
   private KafkaConsumer<String, JsonNode> kafkaConsumer;
 
   @Test
-  public void sendMessage() throws InterruptedException {
-    StockTick sampleTick = new StockTick();
-    sampleTick.setSymbol("MST");
-    sampleTick.setValue(10.0);
-    sampleTick.setValueDate(System.currentTimeMillis());
+  void sendMessage() {
 
     Properties props = new Properties();
     props.put(BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
@@ -79,24 +72,27 @@ public class TestSendMessage {
     props.put(VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     KafkaProducer<String, String> p = new KafkaProducer<>(props);
     p.send(
-        new ProducerRecord<String, String>(
+        new ProducerRecord<>(
             "stocks-ticks",
             "VLO",
-            "{\"symbol\":\"VLO\",\"valueDate\":1550244068123,\"value\":85.66046453803746}"));
+            "{\"symbol\":\"VLO\",\"CqlIdentifier\":1550244068123,\"value\":85.66046453803746}"));
     p.close();
 
-    /* Send
+    /*
+    // Send
+    StockTick sampleTick = new StockTick("MST", Instant.now(), 10.0);
     JsonNode jsonValue = JACKSON_MAPPER.valueToTree(sampleTick);
     for (int i=0;i<7;i++) {
     	jsonProducer.send(new ProducerRecord<String, JsonNode>(topicTicks,
     			sampleTick.getSymbol(), jsonValue));
     	System.out.println("Message sent to " + topicTicks);
     }
-    jsonProducer.close();*/
+    jsonProducer.close();
+    */
   }
 
   @Test
-  public void receiveMessage() throws InterruptedException {
+  void receiveMessage() {
     // Subscription
     kafkaConsumer.subscribe(Collections.singletonList("stocks-ticks"));
     System.out.println("Subscription Started to " + topicTicks);
@@ -106,7 +102,7 @@ public class TestSendMessage {
     kafkaConsumer.close();
   }
 
-  public StockTick mapAsStockData(ConsumerRecord<String, JsonNode> msg) {
+  StockTick mapAsStockData(ConsumerRecord<String, JsonNode> msg) {
     try {
       return JACKSON_MAPPER.treeToValue(msg.value(), StockTick.class);
     } catch (JsonProcessingException e) {

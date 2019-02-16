@@ -6,6 +6,7 @@ import com.datastax.demo.dao.KafkaDao;
 import com.datastax.demo.domain.StockTick;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -25,10 +26,10 @@ import org.springframework.stereotype.Component;
 public class StockTicksProducer implements Processor {
 
   /** Json Jackson parser. */
-  protected static final ObjectMapper JACKSON_MAPPER = new ObjectMapper();
+  private static final ObjectMapper JACKSON_MAPPER = new ObjectMapper();
 
   /** Internal logger. */
-  protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
+  private final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
 
   @Autowired protected DseDao dseDao;
 
@@ -42,16 +43,14 @@ public class StockTicksProducer implements Processor {
   @Value("${kafka.topics.ticks}")
   private String topicTicks;
 
-  /** Symbols in CSV FILE. */
-  protected Set<String> symbols;
-
-  /** Askl to get prices. */
-  protected Map<String, StockTick> initialStockPrices = null;
+  /** Ask to get prices. */
+  private Map<String, StockTick> initialStockPrices = null;
 
   /** Initialize connection to API AlphaVantage */
   @PostConstruct
   public void init() {
-    symbols = dseDao.getSymbolsNYSE();
+    // Symbols in CSV FILE.
+    Set<String> symbols = dseDao.getSymbolsNYSE();
     LOGGER.info("Symbols list retrieved from DSE. ({} items)", symbols.size());
 
     initialStockPrices =
@@ -75,11 +74,11 @@ public class StockTicksProducer implements Processor {
         .forEach(kafkaDao::sendJsonMessage);
   }
 
-  public ProducerRecord<String, JsonNode> mapAsProducerRecord(StockTick sTick) {
+  private ProducerRecord<String, JsonNode> mapAsProducerRecord(StockTick sTick) {
     sTick.setValue(createRandomValue(sTick.getValue()));
-    sTick.setValueDate(System.currentTimeMillis());
+    sTick.setValueDate(Instant.now());
     JsonNode jsonValue = JACKSON_MAPPER.valueToTree(sTick);
-    return new ProducerRecord<String, JsonNode>(topicTicks, sTick.getSymbol(), jsonValue);
+    return new ProducerRecord<>(topicTicks, sTick.getSymbol(), jsonValue);
   }
 
   /** Randomly making the stock evolving with random */

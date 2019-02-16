@@ -18,7 +18,7 @@ public class ProducerRoutes extends RouteBuilder {
 
   /** {@inheritDoc} */
   @Override
-  public void configure() throws Exception {
+  public void configure() {
 
     // ALPHAVANYAGE REST API ==> KAFKA (ticks, 1Min, 1hour)
     from("timer:ticks?fixedRate=true&period={{alphavantage.pollingPeriod.ticks}}")
