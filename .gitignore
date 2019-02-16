@@ -18,5 +18,5 @@ dist
 
 # misc
 .DS_Store
-
+.java-version
 
