@@ -19,4 +19,5 @@ dist
 # misc
 .DS_Store
 .java-version
-
+nohup.out
+webui.log

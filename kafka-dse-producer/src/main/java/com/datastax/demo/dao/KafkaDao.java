@@ -12,15 +12,14 @@ public class KafkaDao {
 
   @Autowired
   @Qualifier("producer.json")
-  protected KafkaProducer<String, JsonNode> jsonProducer;
+  private KafkaProducer<String, JsonNode> jsonProducer;
 
   /**
    * JSON PRODUCER.
    *
-   * @param jsonMsg
+   * @param jsonMsg the message to send.
    */
   public void sendJsonMessage(ProducerRecord<String, JsonNode> jsonMsg) {
-    System.out.println(jsonMsg.topic());
     jsonProducer.send(jsonMsg);
   }
 }

@@ -39,7 +39,7 @@ public class ProducerConfiguration {
     props.put(KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     props.put(VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class.getName());
     props.put(ACKS_CONFIG, producerAck);
-    return new KafkaProducer<String, JsonNode>(props);
+    return new KafkaProducer<>(props);
   }
 
   @Bean("consumer.json")
@@ -49,6 +49,6 @@ public class ProducerConfiguration {
     props.put(GROUP_ID_CONFIG, consumerGroup);
     props.put(KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
     props.put(VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class.getName());
-    return new KafkaConsumer<String, JsonNode>(props);
+    return new KafkaConsumer<>(props);
   }
 }

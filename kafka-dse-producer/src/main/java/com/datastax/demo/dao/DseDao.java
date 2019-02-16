@@ -1,21 +1,23 @@
 package com.datastax.demo.dao;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
+import static com.datastax.oss.driver.api.querybuilder.relation.Relation.column;
 
 import com.datastax.demo.conf.DseConstants;
 import com.datastax.demo.domain.Stock;
-import com.datastax.demo.domain.Stock1Hour;
-import com.datastax.demo.domain.Stock1Min;
 import com.datastax.demo.domain.StockInfo;
 import com.datastax.demo.domain.StockTick;
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.schemabuilder.SchemaBuilder;
-import com.datastax.driver.core.schemabuilder.SchemaBuilder.Direction;
-import com.datastax.driver.dse.DseSession;
-import com.datastax.driver.mapping.Mapper;
-import com.datastax.driver.mapping.MappingManager;
+import com.datastax.dse.driver.api.core.DseSession;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
+import com.datastax.oss.driver.api.core.type.DataTypes;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
@@ -30,126 +32,191 @@ public class DseDao implements DseConstants {
   private static final Logger LOGGER = LoggerFactory.getLogger(DseDao.class);
 
   /** Hold Connectivity to DSE. */
-  @Autowired DseSession dseSession;
+  @Autowired private DseSession dseSession;
 
   /** Hold Connectivity to DSE. */
-  @Autowired CsvDao csvDao;
+  @Autowired private CsvDao csvDao;
 
-  /** Hold Driver Mapper to implement ORM with Cassandra. */
-  @Autowired MappingManager mappingManager;
-
-  /** Mapper. */
-  Mapper<StockTick> stockTicksMapper;
-
-  /** Mapper. */
-  Mapper<StockInfo> stockInfoMapper;
-
-  /** Mapper. */
-  Mapper<Stock1Min> stock1minMapper;
-
-  /** Mapper. */
-  Mapper<Stock1Hour> stock1hourMapper;
+  private PreparedStatement insertIntoStockInfos;
+  private PreparedStatement insertIntoStockTicks;
+  private PreparedStatement insertIntoStocksMinute;
+  private PreparedStatement insertIntoStocksHour;
 
   @PostConstruct
-  public void createTableifNotExist() {
-    // Metadata (Home page for webUI)
-    dseSession.execute(
-        SchemaBuilder.createTable(STOCKS_INFOS)
-            .ifNotExists()
-            .addPartitionKey("exchange", DataType.text())
-            .addClusteringColumn("name", DataType.text())
-            .addColumn("industry", DataType.text())
-            .addColumn("symbol", DataType.text())
-            .withOptions()
-            .clusteringOrder("name", Direction.ASC)
-            .buildInternal());
-    LOGGER.info(
-        " + Table '{}' created in keyspace '{}' (if needed)",
-        STOCKS_INFOS,
-        dseSession.getLoggedKeyspace());
-
-    // Random ticks where seed is last AlphaVantage
-    dseSession.execute(
-        SchemaBuilder.createTable(STOCKS_TICKS)
-            .ifNotExists()
-            .addPartitionKey("symbol", DataType.text())
-            .addClusteringColumn("valueDate", DataType.timestamp())
-            .addColumn("value", DataType.cdouble())
-            .withOptions()
-            .clusteringOrder("valueDate", Direction.DESC)
-            .buildInternal());
-    LOGGER.info(
-        " + Table '{}' created in keyspace '{}' (if needed)",
-        STOCKS_TICKS,
-        dseSession.getLoggedKeyspace());
-
+  public void createOrUpdateSchema() {
+    createTableStockInfosIfNotExists();
+    createTableStockTicksIfNotExists();
     // Create tables for histograms
-    createTableStocksIntervalIfNotExist(STOCKS_MINUTE);
-    LOGGER.info(
-        " + Table '{}' created in keyspace '{}' (if needed)",
-        STOCKS_MINUTE,
-        dseSession.getLoggedKeyspace());
-
-    createTableStocksIntervalIfNotExist(STOCKS_HOUR);
-    LOGGER.info(
-        " + Table '{}' created in keyspace '{}' (if needed)",
-        STOCKS_HOUR,
-        dseSession.getLoggedKeyspace());
-
-    // Init Mappers
-    stockTicksMapper = mappingManager.mapper(StockTick.class);
-    stockInfoMapper = mappingManager.mapper(StockInfo.class);
-
-    // Load CSV and fill table 'stocks_infos'
-    csvDao.readStockInfosFromCsv().forEach(this::saveStockInfo);
-    LOGGER.info(" + Table '{}' filled with symbols found in CSV.", STOCKS_INFOS);
-    LOGGER.info(
-        "Connection successfully established to DSE and schema has been created.", STOCKS_INFOS);
+    createTableStocksIntervalIfNotExists(STOCKS_MINUTE);
+    createTableStocksIntervalIfNotExists(STOCKS_HOUR);
+    prepareStatements();
+    populateTableStockInfos();
+    LOGGER.info("Connection established to DSE and schema successfully created or updated.");
   }
 
-  /** Creation of tables stocks_by* */
-  private void createTableStocksIntervalIfNotExist(String tableName) {
+  /** Metadata table (Home page for webUI) */
+  private void createTableStockInfosIfNotExists() {
     dseSession.execute(
-        SchemaBuilder.createTable(tableName)
+        createTable(STOCKS_INFOS)
             .ifNotExists()
-            .addPartitionKey("symbol", DataType.text())
-            .addClusteringColumn("value_date", DataType.timestamp())
-            .addColumn("open", DataType.cdouble())
-            .addColumn("close", DataType.cdouble())
-            .addColumn("high", DataType.cdouble())
-            .addColumn("low", DataType.cdouble())
-            .addColumn("volume", DataType.bigint())
-            .withOptions()
-            .clusteringOrder("value_date", Direction.DESC)
-            .buildInternal());
+            .withPartitionKey(EXCHANGE, DataTypes.TEXT)
+            .withClusteringColumn(NAME, DataTypes.TEXT)
+            .withColumn(INDUSTRY, DataTypes.TEXT)
+            .withColumn(SYMBOL, DataTypes.TEXT)
+            .withClusteringOrder(NAME, ClusteringOrder.ASC)
+            .build());
+    LOGGER.info(
+        " + Table {} created in keyspace {} (if needed)", STOCKS_INFOS, dseSession.getKeyspace());
   }
 
-  public void saveTicker(StockTick tick) {
-    dseSession.executeAsync(stockTicksMapper.saveQuery(tick));
+  /** Random ticks where seed is last AlphaVantage */
+  private void createTableStockTicksIfNotExists() {
+    dseSession.execute(
+        createTable(STOCKS_TICKS)
+            .ifNotExists()
+            .withPartitionKey(SYMBOL, DataTypes.TEXT)
+            .withClusteringColumn(VALUE_DATE, DataTypes.TIMESTAMP)
+            .withColumn(VALUE, DataTypes.DOUBLE)
+            .withClusteringOrder(VALUE_DATE, ClusteringOrder.DESC)
+            .build());
+    LOGGER.info(
+        " + Table {} created in keyspace {} (if needed)", STOCKS_TICKS, dseSession.getKeyspace());
   }
 
-  public void saveStock1Min(Stock quote) {
-    dseSession.executeAsync(stock1minMapper.saveQuery(new Stock1Min(quote)));
+  /**
+   * Creation of tables stocks_by*
+   *
+   * @param table the table name to create.
+   */
+  private void createTableStocksIntervalIfNotExists(CqlIdentifier table) {
+    dseSession.execute(
+        createTable(table)
+            .ifNotExists()
+            .withPartitionKey(SYMBOL, DataTypes.TEXT)
+            .withClusteringColumn(VALUE_DATE, DataTypes.TIMESTAMP)
+            .withColumn(OPEN, DataTypes.DOUBLE)
+            .withColumn(CLOSE, DataTypes.DOUBLE)
+            .withColumn(HIGH, DataTypes.DOUBLE)
+            .withColumn(LOW, DataTypes.DOUBLE)
+            .withColumn(VOLUME, DataTypes.BIGINT)
+            .withClusteringOrder(VALUE_DATE, ClusteringOrder.DESC)
+            .build());
+    LOGGER.info(" + Table {} created in keyspace {} (if needed)", table, dseSession.getKeyspace());
   }
 
-  public void saveStock1Hour(Stock quote) {
-    dseSession.executeAsync(stock1hourMapper.saveQuery(new Stock1Hour(quote)));
+  private void prepareStatements() {
+    insertIntoStockInfos =
+        dseSession.prepare(
+            insertInto(STOCKS_INFOS)
+                .value(EXCHANGE, bindMarker(EXCHANGE))
+                .value(NAME, bindMarker(NAME))
+                .value(INDUSTRY, bindMarker(INDUSTRY))
+                .value(SYMBOL, bindMarker(SYMBOL))
+                .build());
+    insertIntoStockTicks =
+        dseSession.prepare(
+            insertInto(STOCKS_TICKS)
+                .value(SYMBOL, bindMarker(SYMBOL))
+                .value(VALUE_DATE, bindMarker(VALUE_DATE))
+                .value(VALUE, bindMarker(VALUE))
+                .build());
+    insertIntoStocksMinute =
+        dseSession.prepare(
+            insertInto(STOCKS_MINUTE)
+                .value(SYMBOL, bindMarker(SYMBOL))
+                .value(VALUE_DATE, bindMarker(VALUE_DATE))
+                .value(OPEN, bindMarker(OPEN))
+                .value(CLOSE, bindMarker(CLOSE))
+                .value(HIGH, bindMarker(HIGH))
+                .value(LOW, bindMarker(LOW))
+                .value(VOLUME, bindMarker(VOLUME))
+                .build());
+    insertIntoStocksHour =
+        dseSession.prepare(
+            insertInto(STOCKS_HOUR)
+                .value(SYMBOL, bindMarker(SYMBOL))
+                .value(VALUE_DATE, bindMarker(VALUE_DATE))
+                .value(OPEN, bindMarker(OPEN))
+                .value(CLOSE, bindMarker(CLOSE))
+                .value(HIGH, bindMarker(HIGH))
+                .value(LOW, bindMarker(LOW))
+                .value(VOLUME, bindMarker(VOLUME))
+                .build());
   }
 
-  public void saveStock1Day(Stock quote) {
-    dseSession.executeAsync(stock1hourMapper.saveQuery(new Stock1Hour(quote)));
+  /** Load CSV and fill table 'stocks_infos' */
+  private void populateTableStockInfos() {
+    csvDao.readStockInfosFromCsv().forEach(this::saveStockInfoAsync);
+    LOGGER.info(" + Table {} filled with symbols found in CSV.", STOCKS_INFOS);
   }
 
-  public void saveStockInfo(StockInfo ti) {
-    dseSession.executeAsync(stockInfoMapper.saveQuery(ti));
+  public CompletionStage<StockTick> saveTickerAsync(StockTick tick) {
+    return dseSession
+        .executeAsync(
+            insertIntoStockTicks
+                .boundStatementBuilder()
+                .setString(SYMBOL, tick.getSymbol())
+                .setInstant(VALUE_DATE, tick.getValueDate())
+                .setDouble(VALUE, tick.getValue())
+                .build())
+        .thenApply(rs -> tick);
+  }
+
+  public CompletionStage<Stock> saveStock1MinAsync(Stock quote) {
+    return dseSession
+        .executeAsync(
+            insertIntoStocksMinute
+                .boundStatementBuilder()
+                .setString(SYMBOL, quote.getSymbol())
+                .setInstant(VALUE_DATE, quote.getValueDate())
+                .setDouble(OPEN, quote.getOpen())
+                .setDouble(CLOSE, quote.getClose())
+                .setDouble(HIGH, quote.getHigh())
+                .setDouble(LOW, quote.getLow())
+                .setDouble(VOLUME, quote.getVolume())
+                .build())
+        .thenApply(rs -> quote);
+  }
+
+  public CompletionStage<Stock> saveStock1HourAsync(Stock quote) {
+    return dseSession
+        .executeAsync(
+            insertIntoStocksHour
+                .boundStatementBuilder()
+                .setString(SYMBOL, quote.getSymbol())
+                .setInstant(VALUE_DATE, quote.getValueDate())
+                .setDouble(OPEN, quote.getOpen())
+                .setDouble(CLOSE, quote.getClose())
+                .setDouble(HIGH, quote.getHigh())
+                .setDouble(LOW, quote.getLow())
+                .setDouble(VOLUME, quote.getVolume())
+                .build())
+        .thenApply(rs -> quote);
+  }
+
+  public CompletionStage<StockInfo> saveStockInfoAsync(StockInfo info) {
+    return dseSession
+        .executeAsync(
+            insertIntoStockInfos
+                .boundStatementBuilder()
+                .setString(EXCHANGE, info.getExchange())
+                .setString(NAME, info.getName())
+                .setString(INDUSTRY, info.getIndustry())
+                .setString(SYMBOL, info.getSymbol())
+                .build())
+        .thenApply(rs -> info);
   }
 
   public Set<String> getSymbolsNYSE() {
     return dseSession
-        .execute(select("symbol").from(STOCKS_INFOS).where(eq("exchange", "NYSE")))
+        .execute(
+            selectFrom(STOCKS_INFOS)
+                .column(SYMBOL)
+                .where(column(EXCHANGE).isEqualTo(literal("NYSE")))
+                .build())
         .all()
         .stream()
-        .map(row -> row.getString("symbol"))
+        .map(row -> row.getString(SYMBOL))
         .collect(Collectors.toSet());
   }
 }

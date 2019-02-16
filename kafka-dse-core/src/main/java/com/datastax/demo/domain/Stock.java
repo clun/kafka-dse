@@ -1,11 +1,11 @@
 package com.datastax.demo.domain;
 
-import com.datastax.driver.mapping.annotations.ClusteringColumn;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
-import java.util.Date;
+import java.time.Instant;
+import java.util.Objects;
 
 /** POJO Representing stock from Alpha Vantage. */
 public class Stock implements Serializable {
@@ -14,41 +14,54 @@ public class Stock implements Serializable {
   private static final long serialVersionUID = -5240591446495279713L;
 
   /** Stock symbol. */
-  @PartitionKey private String symbol;
+  private String symbol;
 
   /** timestamp. */
-  @ClusteringColumn
-  @Column(name = "value_date")
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-  private Date valueDate;
+  private Instant valueDate;
 
-  /** value at begining of period. */
-  @Column private double open;
+  /** value at beginning of period. */
+  private double open;
 
   /** value at end of period. */
-  @Column private double close;
+  private double close;
 
   /** low value. */
-  @Column private double low;
+  private double low;
 
   /** high value. */
-  @Column private double high;
+  private double high;
 
-  /** number exchanged. */
-  @Column private long volume;
+  /** volume exchanged. */
+  private long volume;
 
-  /** Default constructor (unmarshalling) */
-  public Stock() {}
+  @JsonCreator
+  public Stock(
+      @JsonProperty("symbol") String symbol,
+      @JsonProperty("valueDate") Instant valueDate,
+      @JsonProperty("open") double open,
+      @JsonProperty("close") double close,
+      @JsonProperty("low") double low,
+      @JsonProperty("high") double high,
+      @JsonProperty("volume") long volume) {
+    this.symbol = symbol;
+    this.valueDate = valueDate;
+    this.open = open;
+    this.close = close;
+    this.low = low;
+    this.high = high;
+    this.volume = volume;
+  }
 
   /** Copy constructor (specialization) */
-  public Stock(Stock parent) {
-    this.valueDate = parent.getValueDate();
-    this.high = parent.getHigh();
-    this.low = parent.getLow();
-    this.open = parent.getOpen();
-    this.close = parent.getClose();
-    this.volume = parent.getVolume();
-    this.symbol = parent.getSymbol();
+  public Stock(Stock toCopy) {
+    this.symbol = toCopy.getSymbol();
+    this.valueDate = toCopy.getValueDate();
+    this.open = toCopy.getOpen();
+    this.close = toCopy.getClose();
+    this.high = toCopy.getHigh();
+    this.low = toCopy.getLow();
+    this.volume = toCopy.getVolume();
   }
 
   /**
@@ -56,7 +69,7 @@ public class Stock implements Serializable {
    *
    * @return current value of 'valueDate'
    */
-  public Date getValueDate() {
+  public Instant getValueDate() {
     return valueDate;
   }
 
@@ -65,7 +78,7 @@ public class Stock implements Serializable {
    *
    * @param valueDate new value for 'valueDate '
    */
-  public void setValueDate(Date valueDate) {
+  public void setValueDate(Instant valueDate) {
     this.valueDate = valueDate;
   }
 
@@ -175,5 +188,49 @@ public class Stock implements Serializable {
    */
   public void setSymbol(String symbol) {
     this.symbol = symbol;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Stock stock = (Stock) o;
+    return Double.compare(stock.open, open) == 0
+        && Double.compare(stock.close, close) == 0
+        && Double.compare(stock.low, low) == 0
+        && Double.compare(stock.high, high) == 0
+        && volume == stock.volume
+        && symbol.equals(stock.symbol)
+        && valueDate.equals(stock.valueDate);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(symbol, valueDate, open, close, low, high, volume);
+  }
+
+  @Override
+  public String toString() {
+    return "Stock{"
+        + "symbol='"
+        + symbol
+        + '\''
+        + ", valueDate="
+        + valueDate
+        + ", open="
+        + open
+        + ", close="
+        + close
+        + ", low="
+        + low
+        + ", high="
+        + high
+        + ", volume="
+        + volume
+        + '}';
   }
 }
