@@ -10,6 +10,7 @@ import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +68,8 @@ public class DseConfiguration {
 
     DefaultDriverConfigLoaderBuilder configLoaderBuilder =
         DefaultDriverConfigLoader.builder()
-            .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "QUORUM");
+            .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "QUORUM")
+            .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30));
 
     if (!StringUtils.isEmpty(dseUsername) && !StringUtils.isEmpty(dsePassword)) {
       LOGGER.info("Username : {}", dseUsername);
