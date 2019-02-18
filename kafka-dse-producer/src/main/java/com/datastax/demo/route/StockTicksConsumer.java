@@ -51,14 +51,14 @@ public class StockTicksConsumer implements Processor {
         .map(this::mapAsStockData)
         .filter(Optional::isPresent)
         .map(Optional::get)
-        .forEach(dseDao::saveTicker);
+        .forEach(dseDao::saveTickerAsync);
   }
 
   /**
    * Skip invalid messages.
    *
-   * @param msg
-   * @return
+   * @param msg the received message.
+   * @return the stock tick object, or empty if the object could not be created.
    */
   public Optional<StockTick> mapAsStockData(ConsumerRecord<String, JsonNode> msg) {
     Optional<StockTick> result = Optional.empty();

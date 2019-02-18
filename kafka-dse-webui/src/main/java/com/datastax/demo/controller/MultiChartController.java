@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class MultiChartController {
 
   @GetMapping("/multichart")
-  public String get(Model model) throws Exception {
+  public String get(Model model) {
     return "multichart";
   }
 }

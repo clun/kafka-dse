@@ -1,34 +1,39 @@
 package com.datastax.demo.domain;
 
-import static com.datastax.demo.conf.DseConstants.STOCKS_INFOS;
-
-import com.datastax.driver.mapping.annotations.ClusteringColumn;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
+import java.util.Objects;
 
 /** Value for Ticks. */
-@Table(name = STOCKS_INFOS)
 public class StockInfo implements Serializable {
 
   /** serial. */
   private static final long serialVersionUID = 5806346188526710465L;
 
   /** value. */
-  @PartitionKey private String exchange;
+  private String exchange;
 
   /** Value Date. */
-  @ClusteringColumn private String name;
+  private String name;
 
   /** code. */
-  @Column private String symbol;
+  private String symbol;
 
   /** value. */
-  @Column private String industry;
+  private String industry;
 
-  /** Default Constructor */
-  public StockInfo() {}
+  @JsonCreator
+  public StockInfo(
+      @JsonProperty("exchange") String exchange,
+      @JsonProperty("name") String name,
+      @JsonProperty("symbol") String symbol,
+      @JsonProperty("industry") String industry) {
+    this.exchange = exchange;
+    this.name = name;
+    this.symbol = symbol;
+    this.industry = industry;
+  }
 
   /**
    * Getter accessor for attribute 'symbol'.
@@ -100,5 +105,43 @@ public class StockInfo implements Serializable {
    */
   public void setExchange(String exchange) {
     this.exchange = exchange;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    StockInfo stockInfo = (StockInfo) o;
+    return exchange.equals(stockInfo.exchange)
+        && name.equals(stockInfo.name)
+        && symbol.equals(stockInfo.symbol)
+        && industry.equals(stockInfo.industry);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(exchange, name, symbol, industry);
+  }
+
+  @Override
+  public String toString() {
+    return "StockInfo{"
+        + "exchange='"
+        + exchange
+        + '\''
+        + ", name='"
+        + name
+        + '\''
+        + ", symbol='"
+        + symbol
+        + '\''
+        + ", industry='"
+        + industry
+        + '\''
+        + '}';
   }
 }

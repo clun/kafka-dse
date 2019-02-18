@@ -17,7 +17,7 @@ import org.springframework.stereotype.Repository;
 public class CsvDao {
 
   @Value("${csvStocksMetadata}")
-  protected String csvFileName;
+  private String csvFileName;
 
   /** Init table stocks_infos (used in home page of webUI). */
   public Stream<StockInfo> readStockInfosFromCsv() {
@@ -34,7 +34,7 @@ public class CsvDao {
               Spliterator.ORDERED),
           false);
     } catch (IOException e) {
-      throw new IllegalArgumentException("Cannot filled table");
+      throw new IllegalArgumentException("Cannot read file: " + csvFileName);
     }
   }
 }

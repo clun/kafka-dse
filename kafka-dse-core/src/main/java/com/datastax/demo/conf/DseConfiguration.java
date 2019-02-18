@@ -1,28 +1,23 @@
 package com.datastax.demo.conf;
 
-import com.datastax.demo.domain.LongToTimeStampCodec;
-import com.datastax.driver.core.AuthProvider;
-import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.QueryOptions;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.schemabuilder.SchemaBuilder;
-import com.datastax.driver.dse.DseCluster.Builder;
-import com.datastax.driver.dse.DseSession;
-import com.datastax.driver.dse.auth.DsePlainTextAuthProvider;
-import com.datastax.driver.mapping.DefaultPropertyMapper;
-import com.datastax.driver.mapping.MappingConfiguration;
-import com.datastax.driver.mapping.MappingManager;
-import com.datastax.driver.mapping.PropertyMapper;
-import com.datastax.driver.mapping.PropertyTransienceStrategy;
-import com.google.common.collect.ImmutableMap;
+import com.datastax.dse.driver.api.reactor.ReactorDseSession;
+import com.datastax.dse.driver.api.reactor.ReactorDseSessionBuilder;
+import com.datastax.dse.driver.internal.core.auth.DsePlainTextAuthProvider;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
+import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
+import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder;
+import java.net.InetSocketAddress;
 import java.util.List;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StopWatch;
+import org.springframework.util.StringUtils;
 
 /** Connectivity to DSE (cassandra, graph, search). */
 @Configuration
@@ -32,98 +27,72 @@ public class DseConfiguration {
   private static final Logger LOGGER = LoggerFactory.getLogger(DseConfiguration.class);
 
   @Value("#{'${dse.contactPoints}'.split(',')}")
-  public List<String> contactPoints;
+  private List<String> contactPoints;
 
   @Value("${dse.port: 9042}")
-  public int port;
+  private int port;
 
-  @Value("${dse.keyspace: system}")
-  public String keyspace;
+  @Value(
+      "#{T(com.datastax.oss.driver.api.core.CqlIdentifier).fromInternal('${dse.keyspace: demo_kafka}')}")
+  public CqlIdentifier keyspace;
 
   @Value("${dse.username}")
-  public Optional<String> dseUsername;
+  private String dseUsername;
 
   @Value("${dse.password}")
-  public Optional<String> dsePassword;
+  private String dsePassword;
 
-  @Value("${dse.localdc : dc1}")
-  public String localDc;
+  @Value("${dse.localdc: dc1}")
+  private String localDc;
 
   @Bean
-  public DseSession dseSession() {
-    long top = System.currentTimeMillis();
+  public ReactorDseSession dseSession() {
+
     LOGGER.info("Initializing connection to DSE Cluster");
+    LOGGER.info("Contact Points : {}", contactPoints);
+    LOGGER.info("Listening Port : {}", port);
+    LOGGER.info("Local DC : {}", localDc);
+    LOGGER.info("Keyspace : {}", keyspace);
 
-    Builder clusterConfig = new Builder();
-    LOGGER.info(" + Contact Points : {}", contactPoints);
-    contactPoints.stream().forEach(clusterConfig::addContactPoint);
-    LOGGER.info(" + Listening Port : {}", port);
-    clusterConfig.withPort(port);
+    StopWatch stopWatch = new StopWatch();
+    stopWatch.start();
 
-    if (dseUsername.isPresent() && dsePassword.isPresent() && dseUsername.get().length() > 0) {
-      AuthProvider cassandraAuthProvider =
-          new DsePlainTextAuthProvider(dseUsername.get(), dsePassword.get());
-      clusterConfig.withAuthProvider(cassandraAuthProvider);
-      LOGGER.info(" + With username  : {}", dseUsername.get());
+    ReactorDseSessionBuilder sessionBuilder =
+        new ReactorDseSessionBuilder().withLocalDatacenter(localDc);
+
+    contactPoints
+        .stream()
+        .map(cp -> InetSocketAddress.createUnresolved(cp, port))
+        .forEach(sessionBuilder::addContactPoint);
+
+    DefaultDriverConfigLoaderBuilder configLoaderBuilder =
+        DefaultDriverConfigLoader.builder()
+            .withString(DefaultDriverOption.REQUEST_CONSISTENCY, "QUORUM");
+
+    if (!StringUtils.isEmpty(dseUsername) && !StringUtils.isEmpty(dsePassword)) {
+      LOGGER.info("Username : {}", dseUsername);
+      configLoaderBuilder
+          .withString(
+              DefaultDriverOption.AUTH_PROVIDER_CLASS, DsePlainTextAuthProvider.class.getName())
+          .withString(DefaultDriverOption.AUTH_PROVIDER_USER_NAME, dseUsername)
+          .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, dsePassword);
     }
 
-    // OPTIONS
-    clusterConfig.withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.QUORUM));
+    sessionBuilder.withConfigLoader(configLoaderBuilder.build());
 
-    // Long <-> Timestamp
-    clusterConfig.withCodecRegistry(new CodecRegistry().register(new LongToTimeStampCodec()));
+    // First Connect without Keyspace (to create it if needed)
+    try (ReactorDseSession tempSession = sessionBuilder.build()) {
+      LOGGER.info("Creating keyspace {} (if needed)", keyspace);
+      SimpleStatement createKeyspace =
+          SchemaBuilder.createKeyspace(keyspace).ifNotExists().withSimpleStrategy(1).build();
+      tempSession.execute(createKeyspace);
+    }
 
-    try {
-      // First Connect without Keyspace (to create if needed)
-      DseSession tmpSession = null;
-      try {
-        tmpSession = clusterConfig.build().connect();
-        tmpSession.execute(
-            SchemaBuilder.createKeyspace(keyspace)
-                .ifNotExists()
-                .with()
-                .replication(ImmutableMap.of("class", "SimpleStrategy", "replication_factor", 1)));
-        LOGGER.info(" + Creating keyspace '{}' (if needed)", keyspace);
-      } finally {
-        if (tmpSession != null) {
-          tmpSession.close();
-        }
-      }
-
-      // Real Connection now
-      DseSession dseSession = clusterConfig.build().connect(keyspace);
-      LOGGER.info(
-          " + Connection established to DSE Cluster \\_0_/ in {} millis.",
-          System.currentTimeMillis() - top);
+    // Now create the actual session
+    try (ReactorDseSession dseSession = sessionBuilder.withKeyspace(keyspace).build()) {
+      stopWatch.stop();
+      LOGGER.info("Connection established to DSE Cluster \\_0_/ in {}.", stopWatch.prettyPrint());
       return dseSession;
-    } catch (InvalidQueryException iqe) {
-      LOGGER.error(
-          "\n-----------------------------------------\n\n"
-              + "Keyspace '{}' seems does not exist. \nPlease update 'application.yml' with correct keyspace name or create one with:\n\n"
-              + "  create keyspace {} WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}; \n\nI will create the "
-              + "tables I need after that.\n-----------------------------------------",
-          keyspace,
-          keyspace);
-      throw new IllegalStateException("", iqe);
     }
-  }
-
-  /**
-   * Use to create mapper and perform ORM on top of Cassandra tables.
-   *
-   * @param session current dse session.
-   * @return mapper
-   */
-  @Bean
-  public MappingManager mappingManager(DseSession session) {
-    // Do not map all fields, only the annotated ones with @Column or @Fields
-    PropertyMapper propertyMapper =
-        new DefaultPropertyMapper()
-            .setPropertyTransienceStrategy(PropertyTransienceStrategy.OPT_IN);
-    // Build configuration from mapping
-    MappingConfiguration configuration =
-        MappingConfiguration.builder().withPropertyMapper(propertyMapper).build();
-    // Sample Manager with advance configuration
-    return new MappingManager(session, configuration);
   }
 }

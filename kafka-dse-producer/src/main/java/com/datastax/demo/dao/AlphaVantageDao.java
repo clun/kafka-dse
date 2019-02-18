@@ -3,7 +3,6 @@ package com.datastax.demo.dao;
 import com.datastax.demo.domain.Stock;
 import com.datastax.demo.domain.StockTick;
 import java.time.ZoneId;
-import java.util.Date;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
@@ -48,9 +47,9 @@ public class AlphaVantageDao {
   public Stream<StockTick> getCurrentStockTicks(Set<String> symbols) {
     try {
       BatchStockQuotesResponse response = clientStockApi.quote(symbols.toArray(new String[] {}));
-      return response.getStockQuotes().stream().map(this::mapStockQuoteAsStockTick);
+      return response.getStockQuotes().stream().map(AlphaVantageDao::mapStockQuoteAsStockTick);
     } catch (RuntimeException re) {
-      LOGGER.error("Cannot get data.");
+      LOGGER.error("Cannot get data.", re);
     }
     return Stream.empty();
   }
@@ -71,25 +70,28 @@ public class AlphaVantageDao {
           .getStockData()
           .stream()
           .limit(nbValue)
-          .map(this::mapStockDataAsStockTick);
+          .map(item -> mapStockDataAsStock(symbol, item));
     } catch (RuntimeException re) {
+      LOGGER.error("Cannot get stocks.", re);
     }
     return Stream.empty();
   }
 
-  private StockTick mapStockQuoteAsStockTick(StockQuote q) {
-    // long real = q.getTimestamp().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-    return new StockTick(q.getSymbol(), q.getPrice(), System.currentTimeMillis());
+  public static StockTick mapStockQuoteAsStockTick(StockQuote quote) {
+    return new StockTick(
+        quote.getSymbol(),
+        quote.getTimestamp().atZone(ZoneId.systemDefault()).toInstant(),
+        quote.getPrice());
   }
 
-  private Stock mapStockDataAsStockTick(StockData item) {
-    Stock tick = new Stock();
-    tick.setClose(item.getClose());
-    tick.setOpen(item.getOpen());
-    tick.setLow(item.getLow());
-    tick.setHigh(item.getHigh());
-    tick.setVolume(item.getVolume());
-    tick.setValueDate(Date.from(item.getDateTime().atZone(ZoneId.systemDefault()).toInstant()));
-    return tick;
+  public static Stock mapStockDataAsStock(String symbol, StockData item) {
+    return new Stock(
+        symbol,
+        item.getDateTime().atZone(ZoneId.systemDefault()).toInstant(),
+        item.getOpen(),
+        item.getClose(),
+        item.getLow(),
+        item.getHigh(),
+        item.getVolume());
   }
 }
