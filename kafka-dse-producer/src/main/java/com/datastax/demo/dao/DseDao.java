@@ -37,6 +37,8 @@ public class DseDao implements DseConstants {
   /** Hold Connectivity to DSE. */
   @Autowired private CsvDao csvDao;
 
+  private CqlIdentifier keyspace;
+
   private PreparedStatement insertIntoStockInfos;
   private PreparedStatement insertIntoStockTicks;
   private PreparedStatement insertIntoStocksMinute;
@@ -44,6 +46,7 @@ public class DseDao implements DseConstants {
 
   @PostConstruct
   public void createOrUpdateSchema() {
+    keyspace = dseSession.getKeyspace().orElseThrow(IllegalStateException::new);
     createTableStockInfosIfNotExists();
     createTableStockTicksIfNotExists();
     // Create tables for histograms
@@ -65,8 +68,7 @@ public class DseDao implements DseConstants {
             .withColumn(SYMBOL, DataTypes.TEXT)
             .withClusteringOrder(NAME, ClusteringOrder.ASC)
             .build());
-    LOGGER.info(
-        " + Table {} created in keyspace {} (if needed)", STOCKS_INFOS, dseSession.getKeyspace());
+    LOGGER.info(" + Table {} created in keyspace {} (if needed)", STOCKS_INFOS, keyspace);
   }
 
   /** Random ticks where seed is last AlphaVantage */
@@ -79,8 +81,7 @@ public class DseDao implements DseConstants {
             .withColumn(VALUE, DataTypes.DOUBLE)
             .withClusteringOrder(VALUE_DATE, ClusteringOrder.DESC)
             .build());
-    LOGGER.info(
-        " + Table {} created in keyspace {} (if needed)", STOCKS_TICKS, dseSession.getKeyspace());
+    LOGGER.info(" + Table {} created in keyspace {} (if needed)", STOCKS_TICKS, keyspace);
   }
 
   /**
@@ -101,7 +102,7 @@ public class DseDao implements DseConstants {
             .withColumn(VOLUME, DataTypes.BIGINT)
             .withClusteringOrder(VALUE_DATE, ClusteringOrder.DESC)
             .build());
-    LOGGER.info(" + Table {} created in keyspace {} (if needed)", table, dseSession.getKeyspace());
+    LOGGER.info(" + Table {} created in keyspace {} (if needed)", table, keyspace);
   }
 
   private void prepareStatements() {
