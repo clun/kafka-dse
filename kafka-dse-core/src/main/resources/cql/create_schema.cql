@@ -6,6 +6,6 @@ CREATE TABLE stocks_ticks (
 	symbol text,
 	value_date timestamp,
 	value double,
-	PRIMARY KEY (symbol, valueDate)
-) WITH CLUSTERING ORDER BY (valueDate DESC);
+	PRIMARY KEY (symbol, value_date)
+) WITH CLUSTERING ORDER BY (value_date DESC);
 
