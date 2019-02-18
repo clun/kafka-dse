@@ -139,7 +139,7 @@ public class DseDao implements DseConstants {
   }
 
   public Flux<StockTick> findFirst500StockTicks() {
-    BoundStatement statement = findFirst100StockTicksBySymbol.bind();
+    BoundStatement statement = findFirst500StockTicks.bind();
     return dseSession.executeReactive(statement).map(DseDao::mapRowToStockTick);
   }
 
