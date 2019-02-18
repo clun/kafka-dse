@@ -89,10 +89,9 @@ public class DseConfiguration {
     }
 
     // Now create the actual session
-    try (ReactorDseSession dseSession = sessionBuilder.withKeyspace(keyspace).build()) {
-      stopWatch.stop();
-      LOGGER.info("Connection established to DSE Cluster \\_0_/ in {}.", stopWatch.prettyPrint());
-      return dseSession;
-    }
+    ReactorDseSession dseSession = sessionBuilder.withKeyspace(keyspace).build();
+    stopWatch.stop();
+    LOGGER.info("Connection established to DSE Cluster \\_0_/ in {}.", stopWatch.prettyPrint());
+    return dseSession;
   }
 }
