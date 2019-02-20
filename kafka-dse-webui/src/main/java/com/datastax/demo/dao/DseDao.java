@@ -9,7 +9,7 @@ import com.datastax.demo.conf.DseConstants;
 import com.datastax.demo.domain.Stock;
 import com.datastax.demo.domain.StockInfo;
 import com.datastax.demo.domain.StockTick;
-import com.datastax.dse.driver.api.reactor.ReactorDseSession;
+import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
@@ -85,7 +85,7 @@ public class DseDao implements DseConstants {
           .build();
 
   /** Hold Connectivity to DSE. */
-  @Autowired protected ReactorDseSession dseSession;
+  @Autowired protected DseSession dseSession;
 
   private PreparedStatement findStockInfoById;
   private PreparedStatement findStockInfosByExchange;
@@ -113,13 +113,15 @@ public class DseDao implements DseConstants {
             .setString(EXCHANGE, exchange)
             .setString(NAME, name)
             .build();
-    return dseSession.executeReactive(statement).map(DseDao::mapRowToStockInfo).singleOrEmpty();
+    return Flux.from(dseSession.executeReactive(statement))
+        .map(DseDao::mapRowToStockInfo)
+        .singleOrEmpty();
   }
 
   public Flux<StockInfo> findStockInfosByExchange(String exchange) {
     BoundStatement statement =
         findStockInfosByExchange.boundStatementBuilder().setString(EXCHANGE, exchange).build();
-    return dseSession.executeReactive(statement).map(DseDao::mapRowToStockInfo);
+    return Flux.from(dseSession.executeReactive(statement)).map(DseDao::mapRowToStockInfo);
   }
 
   public Mono<StockTick> findStockTickById(String symbol, Instant valueDate) {
@@ -129,18 +131,20 @@ public class DseDao implements DseConstants {
             .setString(SYMBOL, symbol)
             .setInstant(VALUE_DATE, valueDate)
             .build();
-    return dseSession.executeReactive(statement).map(DseDao::mapRowToStockTick).singleOrEmpty();
+    return Flux.from(dseSession.executeReactive(statement))
+        .map(DseDao::mapRowToStockTick)
+        .singleOrEmpty();
   }
 
   public Flux<StockTick> findFirst100StockTicksBySymbol(String symbol) {
     BoundStatement statement =
         findFirst100StockTicksBySymbol.boundStatementBuilder().setString(SYMBOL, symbol).build();
-    return dseSession.executeReactive(statement).map(DseDao::mapRowToStockTick);
+    return Flux.from(dseSession.executeReactive(statement)).map(DseDao::mapRowToStockTick);
   }
 
   public Flux<StockTick> findFirst500StockTicks() {
     BoundStatement statement = findFirst500StockTicks.bind();
-    return dseSession.executeReactive(statement).map(DseDao::mapRowToStockTick);
+    return Flux.from(dseSession.executeReactive(statement)).map(DseDao::mapRowToStockTick);
   }
 
   public Mono<Stock> findStockMinuteById(String symbol, Instant valueDate) {
@@ -150,7 +154,9 @@ public class DseDao implements DseConstants {
             .setString(SYMBOL, symbol)
             .setInstant(VALUE_DATE, valueDate)
             .build();
-    return dseSession.executeReactive(statement).map(DseDao::mapRowToStock).singleOrEmpty();
+    return Flux.from(dseSession.executeReactive(statement))
+        .map(DseDao::mapRowToStock)
+        .singleOrEmpty();
   }
 
   public Mono<Stock> findStockHourById(String symbol, Instant valueDate) {
@@ -160,7 +166,9 @@ public class DseDao implements DseConstants {
             .setString(SYMBOL, symbol)
             .setInstant(VALUE_DATE, valueDate)
             .build();
-    return dseSession.executeReactive(statement).map(DseDao::mapRowToStock).singleOrEmpty();
+    return Flux.from(dseSession.executeReactive(statement))
+        .map(DseDao::mapRowToStock)
+        .singleOrEmpty();
   }
 
   private static StockTick mapRowToStockTick(Row row) {

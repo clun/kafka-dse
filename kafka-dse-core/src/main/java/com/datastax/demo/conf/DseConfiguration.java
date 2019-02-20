@@ -1,7 +1,7 @@
 package com.datastax.demo.conf;
 
-import com.datastax.dse.driver.api.reactor.ReactorDseSession;
-import com.datastax.dse.driver.api.reactor.ReactorDseSessionBuilder;
+import com.datastax.dse.driver.api.core.DseSession;
+import com.datastax.dse.driver.api.core.DseSessionBuilder;
 import com.datastax.dse.driver.internal.core.auth.DsePlainTextAuthProvider;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -47,7 +47,7 @@ public class DseConfiguration {
   private String localDc;
 
   @Bean
-  public ReactorDseSession dseSession() {
+  public DseSession dseSession() {
 
     LOGGER.info("Initializing connection to DSE Cluster");
     LOGGER.info("Contact Points : {}", contactPoints);
@@ -58,8 +58,7 @@ public class DseConfiguration {
     StopWatch stopWatch = new StopWatch();
     stopWatch.start();
 
-    ReactorDseSessionBuilder sessionBuilder =
-        new ReactorDseSessionBuilder().withLocalDatacenter(localDc);
+    DseSessionBuilder sessionBuilder = new DseSessionBuilder().withLocalDatacenter(localDc);
 
     contactPoints
         .stream()
@@ -83,7 +82,7 @@ public class DseConfiguration {
     sessionBuilder.withConfigLoader(configLoaderBuilder.build());
 
     // First Connect without Keyspace (to create it if needed)
-    try (ReactorDseSession tempSession = sessionBuilder.build()) {
+    try (DseSession tempSession = sessionBuilder.build()) {
       LOGGER.info("Creating keyspace {} (if needed)", keyspace);
       SimpleStatement createKeyspace =
           SchemaBuilder.createKeyspace(keyspace).ifNotExists().withSimpleStrategy(1).build();
@@ -91,7 +90,7 @@ public class DseConfiguration {
     }
 
     // Now create the actual session
-    ReactorDseSession dseSession = sessionBuilder.withKeyspace(keyspace).build();
+    DseSession dseSession = sessionBuilder.withKeyspace(keyspace).build();
     stopWatch.stop();
     LOGGER.info(
         "Connection established to DSE Cluster \\_0_/ in {} seconds.",

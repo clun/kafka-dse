@@ -32,9 +32,8 @@
   <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
   <properties>
     <!-- DataStax Java-Driver -->
-    <dse-java-driver.version>2.0.0-rc1-a76f6cf8b-kafka-demo</dse-java-driver.version>
-    <oss-java-driver.version>4.0.0-rc1-d17ac777b-kafka-demo</oss-java-driver.version>
-    <oss-java-driver.version>4.0.0-rc1-d17ac777b-kafka-demo</oss-java-driver.version>
+    <dse-java-driver.version>2.0.0-rc1</dse-java-driver.version>
+    <oss-java-driver.version>4.0.0-rc1</oss-java-driver.version>
     <!-- ThirdParty library -->
     <spring.version>5.0.8.RELEASE</spring.version>
     <spring-boot.version>2.0.3.RELEASE</spring-boot.version>
@@ -62,11 +61,6 @@
       <dependency>
         <groupId>com.datastax.dse</groupId>
         <artifactId>dse-java-driver-core</artifactId>
-        <version>${dse-java-driver.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datastax.dse</groupId>
-        <artifactId>dse-java-driver-reactor</artifactId>
         <version>${dse-java-driver.version}</version>
       </dependency>
       <dependency>
