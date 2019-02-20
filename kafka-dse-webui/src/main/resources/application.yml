@@ -20,7 +20,7 @@ server:
 dse:
   contactPoints: 127.0.0.1
   port: 9042
-  localdc: SearchGraphAnalytics
+  localdc: dc1
   username:
   password:
   keyspace: demo_kafka
