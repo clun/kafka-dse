@@ -2,6 +2,7 @@ package com.datastax.demo.controller;
 
 import com.datastax.demo.dao.DseDao;
 import com.datastax.demo.domain.StockTick;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 import reactor.core.publisher.Flux;
 
-/** Service providing informations for UI. */
+/** Service providing ticker information for UI. */
 @Controller
 public class TickerController {
 
@@ -25,7 +26,7 @@ public class TickerController {
   @GetMapping(path = "/tickers/streams", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   @ResponseBody
   public Flux<StockTick> fetchLastTicks() {
-    return dseDao.findFirst500StockTicks();
+    return dseDao.findFirst500StockTicks().sort(Comparator.comparing(StockTick::getSymbol));
   }
 
   @GetMapping(
