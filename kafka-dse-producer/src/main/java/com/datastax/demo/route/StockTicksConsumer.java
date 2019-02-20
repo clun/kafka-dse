@@ -27,9 +27,6 @@ public class StockTicksConsumer implements Processor {
   /** Internal logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(StockTicksConsumer.class);
 
-  /** Json Jackson parser. */
-  private static final ObjectMapper JACKSON_MAPPER = new ObjectMapper();
-
   @Autowired
   @Qualifier("consumer.json")
   private KafkaConsumer<String, JsonNode> kafkaConsumer;
@@ -38,6 +35,9 @@ public class StockTicksConsumer implements Processor {
   private String topicTicks;
 
   @Autowired private DseDao dseDao;
+
+  /** Json Jackson parser. */
+  @Autowired private ObjectMapper jacksonMapper;
 
   @PostConstruct
   public void init() {
@@ -63,7 +63,7 @@ public class StockTicksConsumer implements Processor {
   public Optional<StockTick> mapAsStockData(ConsumerRecord<String, JsonNode> msg) {
     Optional<StockTick> result = Optional.empty();
     try {
-      StockTick tick = JACKSON_MAPPER.treeToValue(msg.value(), StockTick.class);
+      StockTick tick = jacksonMapper.treeToValue(msg.value(), StockTick.class);
       result = Optional.of(tick);
     } catch (JsonProcessingException e) {
       LOGGER.warn("Message  " + msg.value().asText() + " cannot be processed");

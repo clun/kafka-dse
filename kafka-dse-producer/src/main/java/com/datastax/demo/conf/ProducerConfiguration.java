@@ -9,6 +9,9 @@ import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CL
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.Properties;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -31,6 +34,14 @@ public class ProducerConfiguration {
 
   @Value("${kafka.group}")
   private String consumerGroup;
+
+  @Bean
+  public ObjectMapper jacksonMapper() {
+    ObjectMapper jacksonMapper = new ObjectMapper();
+    jacksonMapper.registerModule(new JavaTimeModule());
+    jacksonMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+    return jacksonMapper;
+  }
 
   @Bean("producer.json")
   public KafkaProducer<String, JsonNode> jsonProducer() {

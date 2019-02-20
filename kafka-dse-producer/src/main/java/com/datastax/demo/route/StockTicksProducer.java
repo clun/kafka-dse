@@ -25,9 +25,6 @@ import org.springframework.stereotype.Component;
 @Component("stockTicks.producer")
 public class StockTicksProducer implements Processor {
 
-  /** Json Jackson parser. */
-  private static final ObjectMapper JACKSON_MAPPER = new ObjectMapper();
-
   /** Internal logger. */
   private final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
 
@@ -36,6 +33,9 @@ public class StockTicksProducer implements Processor {
   @Autowired protected AlphaVantageDao alphaVantageDao;
 
   @Autowired protected KafkaDao kafkaDao;
+
+  /** Json Jackson parser. */
+  @Autowired private ObjectMapper jacksonMapper;
 
   @Value("${alphavantage.waitTime: 100 }")
   protected int apiWaitTime;
@@ -65,9 +65,7 @@ public class StockTicksProducer implements Processor {
   public void process(Exchange exchange) throws Exception {
     LOGGER.info(
         "Pushing '{}' stocks ticks to Kafka topic '{}'", initialStockPrices.size(), topicTicks);
-    initialStockPrices
-        .values()
-        .stream()
+    initialStockPrices.values().stream()
         // Map to Avro Message
         .map(this::mapAsProducerRecord)
         // Send to Kafka
@@ -77,7 +75,7 @@ public class StockTicksProducer implements Processor {
   private ProducerRecord<String, JsonNode> mapAsProducerRecord(StockTick sTick) {
     sTick.setValue(createRandomValue(sTick.getValue()));
     sTick.setValueDate(Instant.now());
-    JsonNode jsonValue = JACKSON_MAPPER.valueToTree(sTick);
+    JsonNode jsonValue = jacksonMapper.valueToTree(sTick);
     return new ProducerRecord<>(topicTicks, sTick.getSymbol(), jsonValue);
   }
 

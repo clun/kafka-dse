@@ -1,7 +1,6 @@
 package com.datastax.demo.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import java.time.Instant;
@@ -17,7 +16,6 @@ public class Stock implements Serializable {
   private String symbol;
 
   /** timestamp. */
-  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
   private Instant valueDate;
 
   /** value at beginning of period. */
