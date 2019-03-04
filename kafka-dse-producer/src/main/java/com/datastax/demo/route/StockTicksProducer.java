@@ -18,6 +18,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +36,9 @@ public class StockTicksProducer implements Processor {
   @Autowired protected KafkaDao kafkaDao;
 
   /** Json Jackson parser. */
-  @Autowired private ObjectMapper jacksonMapper;
+  @Autowired
+  @Qualifier("producer.mapper")
+  private ObjectMapper jacksonMapper;
 
   @Value("${alphavantage.waitTime: 100 }")
   protected int apiWaitTime;
@@ -65,7 +68,9 @@ public class StockTicksProducer implements Processor {
   public void process(Exchange exchange) throws Exception {
     LOGGER.info(
         "Pushing '{}' stocks ticks to Kafka topic '{}'", initialStockPrices.size(), topicTicks);
-    initialStockPrices.values().stream()
+    initialStockPrices
+        .values()
+        .stream()
         // Map to Avro Message
         .map(this::mapAsProducerRecord)
         // Send to Kafka

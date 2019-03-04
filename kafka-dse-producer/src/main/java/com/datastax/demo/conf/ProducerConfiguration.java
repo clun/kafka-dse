@@ -35,7 +35,7 @@ public class ProducerConfiguration {
   @Value("${kafka.group}")
   private String consumerGroup;
 
-  @Bean
+  @Bean("producer.mapper")
   public ObjectMapper jacksonMapper() {
     ObjectMapper jacksonMapper = new ObjectMapper();
     jacksonMapper.registerModule(new JavaTimeModule());

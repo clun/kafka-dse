@@ -37,7 +37,9 @@ public class StockTicksConsumer implements Processor {
   @Autowired private DseDao dseDao;
 
   /** Json Jackson parser. */
-  @Autowired private ObjectMapper jacksonMapper;
+  @Autowired
+  @Qualifier("producer.mapper")
+  private ObjectMapper jacksonMapper;
 
   @PostConstruct
   public void init() {
@@ -50,8 +52,8 @@ public class StockTicksConsumer implements Processor {
     StreamSupport.stream(kafkaConsumer.poll(100).spliterator(), false)
         .map(this::mapAsStockData)
         .filter(Optional::isPresent)
-        .map(Optional::get)
-        .forEach(dseDao::saveTickerAsync);
+        .map(Optional::get);
+        //.forEach(dseDao::saveTickerAsync);
   }
 
   /**
@@ -66,6 +68,7 @@ public class StockTicksConsumer implements Processor {
       StockTick tick = jacksonMapper.treeToValue(msg.value(), StockTick.class);
       result = Optional.of(tick);
     } catch (JsonProcessingException e) {
+      e.printStackTrace();
       LOGGER.warn("Message  " + msg.value().asText() + " cannot be processed");
     }
     return result;

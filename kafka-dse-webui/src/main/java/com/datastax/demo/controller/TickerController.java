@@ -3,8 +3,6 @@ package com.datastax.demo.controller;
 import com.datastax.demo.dao.DseDao;
 import com.datastax.demo.domain.StockTick;
 import java.util.Comparator;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -19,7 +17,7 @@ public class TickerController {
 
   /** Map. */
   // FIXME use Spring Cache
-  private Map<String, Flux<StockTick>> ticksBySymbolCache = new ConcurrentHashMap<>();
+  // private Map<String, Flux<StockTick>> ticksBySymbolCache = new ConcurrentHashMap<>();
 
   @Autowired private DseDao dseDao;
 
@@ -35,7 +33,8 @@ public class TickerController {
   )
   @ResponseBody
   public Flux<StockTick> fetchLastTicks(@PathVariable("symbol") String symbol) {
-    return ticksBySymbolCache.computeIfAbsent(
-        symbol, s -> dseDao.findFirst100StockTicksBySymbol(s).cache());
+    return dseDao.findFirst100StockTicksBySymbol(symbol);
+    // ticksBySymbolCache.computeIfAbsent(
+    // symbol, s -> dseDao.findFirst100StockTicksBySymbol(s).cache());
   }
 }
