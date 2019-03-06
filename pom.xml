@@ -25,6 +25,7 @@
   <modules>
     <module>kafka-dse-core</module>
     <module>kafka-dse-producer</module>
+    <module>kafka-dse-consumer</module>
     <module>kafka-dse-webui</module>
   </modules>
   <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -210,6 +211,44 @@
           <groupId>au.com.acegi</groupId>
           <artifactId>xml-format-maven-plugin</artifactId>
           <version>3.0.7</version>
+        </plugin>
+        <!-- fmt-maven-plugin and xml-format-maven-plugin and raised issues in Eclipse IDE -->
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>com.coveo</groupId>
+                    <artifactId>fmt-maven-plugin</artifactId>
+                    <versionRange>[2.2.0,)</versionRange>
+                    <goals>
+                      <goal>format</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore/>
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>au.com.acegi</groupId>
+                    <artifactId>xml-format-maven-plugin</artifactId>
+                    <versionRange>[3.0.7,)</versionRange>
+                    <goals>
+                      <goal>xml-format</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore/>
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>

@@ -1,3 +1,6 @@
+# Jar to be download on academy
+kafka-connect-dse-1.0.0.jar
+
 # eclipse conf file
 .settings
 .classpath

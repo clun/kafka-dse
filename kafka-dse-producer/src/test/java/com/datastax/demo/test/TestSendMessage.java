@@ -4,9 +4,8 @@ import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS
 import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
 
-import com.datastax.demo.conf.ProducerConfiguration;
-import com.datastax.demo.dao.KafkaDao;
-import com.datastax.demo.domain.StockTick;
+import com.datastax.kafkadse.core.domain.StockTick;
+import com.datastax.kafkadse.producer.conf.ProducerConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,23 +28,21 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
- * LOCAL: kafka-topics --zookeeper localhost:2181 --list kafka-console-consumer --topic stocks-ticks
- * --bootstrap-server localhost:9092 kafka-topics --zookeeper localhost:2181 --delete --topic
- * stocks-ticks
- *
- * <p>O List available Topics : /opt/kafka/bin/kafka-topics.sh --zookeeper zookeeper:2181 --list
- *
- * <p>Consumer topic stock-ticks : /opt/kafka/bin/kafka-console-consumer.sh —-topic testTopic
- * --zookeeper zookeeper:2181
- *
- * <p>Create messages in Kafka : /opt/kafka/bin/kafka-console-producer.sh --broker-list
- * localhost:9092 --topic testTopic
+ * List available Topics :
+ * <li>kafka-topics --zookeeper zookeeper:2181 --list <br>
+ *     To Delete a Topic: kafka-topics --zookeeper localhost:2181 --delete --topic <br>
+ *     To Write message in topic from console
+ * <li>kafka-console-producer --broker-list localhost:9092 --topic stocks-ticks
+ * <li>{"symbol":"HPE","valueDate":1550662132131,"value":16.395170844470908} <br>
+ *     To look messages in Console :
+ * <li>docker exec -i -t kafka-dse_kafka_1 kafka-console-consumer --bootstrap-server localhost:9092
+ *     --from-beginning --topic stocks-ticks
  *
  * @author cedricklunven
  */
 @ExtendWith(SpringExtension.class)
 @TestPropertySource(locations = "/config-test.properties")
-@ContextConfiguration(classes = {KafkaDao.class, ProducerConfiguration.class})
+@ContextConfiguration(classes = {ProducerConfiguration.class})
 @Disabled
 public class TestSendMessage {
 

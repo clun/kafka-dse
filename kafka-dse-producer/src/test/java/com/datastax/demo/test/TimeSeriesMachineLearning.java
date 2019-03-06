@@ -2,8 +2,8 @@ package com.datastax.demo.test;
 
 import static com.github.signaflo.data.visualization.Plots.plot;
 
-import com.datastax.demo.conf.DseConfiguration;
-import com.datastax.demo.dao.DseDao;
+import com.datastax.kafkadse.core.conf.DseConfiguration;
+import com.datastax.kafkadse.core.dao.DseDao;
 import com.github.signaflo.timeseries.TestData;
 import com.github.signaflo.timeseries.TimeSeries;
 import com.github.signaflo.timeseries.model.arima.Arima;

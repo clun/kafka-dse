@@ -141,7 +141,7 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
         <version>${spring-boot.version}</version>
         <configuration>
-          <mainClass>com.datastax.demo.ProducerApplication</mainClass>
+          <mainClass>com.datastax.kafkadse.producer.ProducerApplication</mainClass>
         </configuration>
         <executions>
           <execution>

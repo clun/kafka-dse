@@ -5,10 +5,13 @@
       <pattern>%d{HH:mm:ss.SSS} %magenta(%-5level) %cyan(%-45logger) : %msg%n</pattern>
     </encoder>
   </appender>
-  <logger name="com.datastax.demo" level="DEBUG" additivity="false">
+  <logger name="com.datastax.kafkadse.producer" level="INFO" additivity="false">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="com.datastax.demo.ProducerApplication" level="WARN" additivity="false">
+  <logger name="com.datastax.kafkadse.core" level="INFO" additivity="false">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="com.datastax.kafkadse.producer.ProducerApplication" level="WARN" additivity="false">
     <appender-ref ref="STDOUT"/>
   </logger>
   <root level="ERROR">

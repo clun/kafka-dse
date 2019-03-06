@@ -4,6 +4,9 @@ __________                   .___
  |    |     |  | \(  <_> ) /_/ |  |  /\  \__\  ___/|  | \/
  |____|     |__|   \____/\____ |____/  \___  >___  >__|   
                               \/           \/    \/       
- Read Stocks from AlphaVantage and then, generate random values simulating evolutions
+
+ Provided to you by DataStax Advocates team \_0_/
  
-Open your browser for monitoring : http://localhost:8088/admin#/wallboard
+ 1. Load a Stocks inventory from CSV File
+ 2. Init Stocks values from AlphaVantage API calls
+ 3. Generate random values and send to Kafka topic 'stocks_ticks'

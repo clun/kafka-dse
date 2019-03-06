@@ -1,8 +1,8 @@
 package com.datastax.demo.test;
 
-import com.datastax.demo.conf.DseConfiguration;
-import com.datastax.demo.dao.AlphaVantageDao;
-import com.datastax.demo.dao.DseDao;
+import com.datastax.kafkadse.core.conf.DseConfiguration;
+import com.datastax.kafkadse.core.dao.DseDao;
+import com.datastax.kafkadse.producer.dao.AlphaVantageDao;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

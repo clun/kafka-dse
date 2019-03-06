@@ -4,24 +4,8 @@
 spring:
   application:
     name: StockData Injector for Kafka
-  messages:
-    basename: i18n/messages    
-  boot:
-    admin:
-      context-path: /admin
-      client:
-        url:
-        - "http://localhost:8088/admin" 
 server:
   port: 8088
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"  
-  endpoint:
-    health:
-      show-details: ALWAYS
   
 # ---------------------------------------------------------------------------------
 # Apache Camel (integration fmk)
@@ -38,10 +22,9 @@ camel:
 kafka:
   server: 127.0.0.1:9092
   period: 2000
-  group: tick-group
   ack: -1
   topics:
-     ticks: stocks-ticks
+     ticks: stocks_ticks
    
 # ---------------------------------------------------------------------------------
 # DataStax Enterprise client infos
@@ -49,7 +32,7 @@ kafka:
 dse:
   contactPoints: 127.0.0.1
   port: 9042
-  localdc: dc1
+  localdc: DC1
   keyspace: demo_kafka
   username:
   password:
