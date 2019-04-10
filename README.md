@@ -30,9 +30,17 @@ Without the connector only start `producer` and `webui` like the following :
 
 ## Install and run
 
-1. After cloning this project start `kafka` and DataStax components using the following command :
+1. Clone this repository on your laptop, driver2 branch
+
+```bash
+git clone -b driver2 https://github.com/clun/kafka-dse.git
+```
+
+2. Start `Kafka` and `DataStax` components using the following command :
  
 ```bash
+cd kafka-dse
+
 docker-compose up -d
 ```
  You will have access to :
@@ -90,7 +98,7 @@ You will have access to :
 - [The web UI](http://localhost:8082) user interface to see charts
 
 
-You can start `kafka-dse-consumer` component using again `spring-boot:run` and see events coming in Datastax Enterprise and the UI but this one is only for test. You want to use the sink.
+You can start `kafka-dse-consumer` component using again `spring-boot:run` and see events coming in Datastax Enterprise and the UI but this one is only for test. But you want to use the sink.
 
 4. Download the *DataStax Apache Kafka™ Connector* from [academy.datastax.com] and put the library in `kafka-dse-sink` folder here. Then execute the following :
 
@@ -100,7 +108,8 @@ docker-compose -f docker-compose-connect.yml up
 
 Kafka-Connect is starting. You can in the log that the class `com.datastax.kafkaconnector.DseSinkConnector` is detected in the classpath. When the service is up (http interface is OK) we register the sink using a POST query.
 
-You can have a look to the [mapping here](docker-compose-connect.yml)
+You can look to `kafka-connect` [sinks here](http://localhost:18083/connectors/) ou our [config here](http://localhost:18083/connectors/dse_stock_ticks)
 
-More informations on the [DataStax Documentation](https://docs.datastax.com/en/kafka/doc/index.html
-)
+More informations on the [DataStax Documentation](https://docs.datastax.com/en/kafka/doc/index.html)
+
+

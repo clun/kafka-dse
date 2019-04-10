@@ -9,6 +9,8 @@ services:
       - "9042:9042"
       - "8983:8983"
       - "8182:8182"
+    depends_on:
+       - opscenter
     environment:
       - DS_LICENSE=accept
       - DC=DC1
@@ -36,8 +38,6 @@ services:
     image: "datastax/dse-opscenter:6.7.0"
     ports:
       - 8888:8888
-    depends_on:
-       - dse  
     environment:
       - DS_LICENSE=accept
   
@@ -51,23 +51,6 @@ services:
   
   # Message broker
   kafka:
-    # "`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-
-    # An important note about accessing Kafka from clients on other machines:
-    # -----------------------------------------------------------------------
-    #
-    # The config used here exposes port 9092 for _external_ connections to the broker
-    # i.e. those from _outside_ the docker network. This could be from the host machine
-    # running docker, or maybe further afield if you've got a more complicated setup.
-    # If the latter is true, you will need to change the value 'localhost' in
-    # KAFKA_ADVERTISED_LISTENERS to one that is resolvable to the docker host from those
-    # remote clients
-    #
-    # For connections _internal_ to the docker network, such as from other services
-    # and components, use kafka:29092.
-    #
-    # See https://rmoff.net/2018/08/02/kafka-listeners-explained/ for details
-    # "`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-'"`-._,-
-    #
     image: confluentinc/cp-kafka:5.1.0
     depends_on:
       - zookeeper
@@ -88,15 +71,11 @@ services:
     image: tchiotludo/kafkahq
     environment:
       KAFKAHQ_CONFIGURATION: |
-        {
-          kafka {
-            connections {
-              docker-kafka-server {
-                  bootstrap.servers: "kafka:29092"
-              }
-            }
-          }
-        }
+        kafkahq:
+          connections:
+            docker-kafka-server:
+              properties:
+                bootstrap.servers: "kafka:29092"
     ports:
       - "8080:8080"
     depends_on:
