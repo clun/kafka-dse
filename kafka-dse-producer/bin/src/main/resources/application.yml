@@ -1,0 +1,53 @@
+# ---------------------------------------------------------------------------------
+# Spring Boot Fmk properties
+# ---------------------------------------------------------------------------------
+spring:
+  application:
+    name: StockData Injector for Kafka
+server:
+  port: 8088
+  
+# ---------------------------------------------------------------------------------
+# Apache Camel (integration fmk)
+# ---------------------------------------------------------------------------------
+camel:
+  springboot:
+    name: Kafka Producer
+  cloud:
+    enabled: false        
+
+# ---------------------------------------------------------------------------------
+# Apache KAFKA client infos
+# ---------------------------------------------------------------------------------
+kafka:
+  server: 127.0.0.1:9092
+  period: 2000
+  ack: -1
+  topics:
+     ticks: stocks_ticks
+   
+# ---------------------------------------------------------------------------------
+# DataStax Enterprise client infos
+# ---------------------------------------------------------------------------------
+dse:
+  contactPoints: 127.0.0.1
+  port: 9042
+  localdc: DC1
+  keyspace: demo_kafka
+  username:
+  password:
+
+# File with the Ticks metadata (Codes...)
+csvStocksMetadata: src/main/resources/stocks-metadata.csv
+
+# ---------------------------------------------------------------------------------
+# Query QUOTES from https://www.alphavantage.co/documentation/
+# ---------------------------------------------------------------------------------
+alphavantage: 
+  apiKey: 2HWDTH7BA7FRBP76
+  timeout: 3000
+  waitTime: 100
+  pollingPeriod:
+    ticks: 5000
+    1min: 60000
+    1hour: 3600000

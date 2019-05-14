@@ -1,0 +1,32 @@
+
+ A. OVERVIEW in ECLIPSE (MULTI COMPONENT)
+
+ B. DOCKER-COMPOSE 
+     - B.1. List components Kafka
+     - B.2. List components DataStax
+
+ C. OPSCENTER (show the UI)
+
+ D. DATASTAX STUDIO (show the notebooks)
+ 
+ E. KafkaHQ (show the UI)
+
+ F. Start the PRODUCER
+
+ G. SHOW KAFKA HQ
+
+ H. SHOW STUDIO (Table have been created)
+ 	- Stock info
+ 	- Stock ticks time series
+
+ I. KAFKA-CONNECT API
+
+ J. Configuration of SINK
+
+ K. Execute and look at the logs
+
+ L. Studio events are coming now, truncate no cheating
+
+ M. WebUI (Reactive)
+
+ 

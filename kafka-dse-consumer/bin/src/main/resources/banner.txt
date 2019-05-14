@@ -1,0 +1,12 @@
+_________                                                  
+\_   ___ \  ____   ____   ________ __  _____   ___________ 
+/    \  \/ /  _ \ /    \ /  ___/  |  \/     \_/ __ \_  __ \
+\     \___(  <_> )   |  \\___ \|  |  /  Y Y  \  ___/|  | \/
+ \______  /\____/|___|  /____  >____/|__|_|  /\___  >__|   
+        \/            \/     \/            \/     \/       
+
+ Provided to you by DataStax Advocates team \_0_/
+
+ 1. Read Topic stocks_ticks
+ 2. Parse Json messages and save to DataStax Enterprise
+

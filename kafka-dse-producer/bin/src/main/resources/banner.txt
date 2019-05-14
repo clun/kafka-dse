@@ -1,0 +1,12 @@
+__________                   .___                         
+\______   \_______  ____   __| _/_ __   ____  ___________ 
+ |     ___/\_  __ \/  _ \ / __ |  |  \_/ ___\/ __ \_  __ \
+ |    |     |  | \(  <_> ) /_/ |  |  /\  \__\  ___/|  | \/
+ |____|     |__|   \____/\____ |____/  \___  >___  >__|   
+                              \/           \/    \/       
+
+ Provided to you by DataStax Advocates team \_0_/
+ 
+ 1. Load a Stocks inventory from CSV File
+ 2. Init Stocks values from AlphaVantage API calls
+ 3. Generate random values and send to Kafka topic 'stocks_ticks'

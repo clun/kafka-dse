@@ -1,23 +1,25 @@
 package com.datastax.kafkadse.producer.dao;
 
-import com.datastax.kafkadse.core.domain.Stock;
-import com.datastax.kafkadse.core.domain.StockTick;
 import java.time.ZoneId;
 import java.util.Set;
 import java.util.stream.Stream;
+
 import javax.annotation.PostConstruct;
+
 import org.patriques.AlphaVantageConnector;
 import org.patriques.BatchStockQuotes;
 import org.patriques.TimeSeries;
 import org.patriques.input.timeseries.Interval;
 import org.patriques.input.timeseries.OutputSize;
-import org.patriques.output.quote.BatchStockQuotesResponse;
 import org.patriques.output.quote.data.StockQuote;
 import org.patriques.output.timeseries.data.StockData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
+
+import com.datastax.kafkadse.core.domain.Stock;
+import com.datastax.kafkadse.core.domain.StockTick;
 
 @Repository
 public class AlphaVantageDao {
@@ -45,13 +47,13 @@ public class AlphaVantageDao {
   }
 
   public Stream<StockTick> getCurrentStockTicks(Set<String> symbols) {
-    try {
-      BatchStockQuotesResponse response = clientStockApi.quote(symbols.toArray(new String[] {}));
-      return response.getStockQuotes().stream().map(AlphaVantageDao::mapStockQuoteAsStockTick);
-    } catch (RuntimeException re) {
-      LOGGER.error("Cannot get data.", re);
-    }
-    return Stream.empty();
+	if (symbols ==null || symbols.isEmpty()) {
+		throw new IllegalStateException("Symbol list is emptys");
+	}
+	return clientStockApi
+			.quote(symbols.toArray(new String[] {}))
+			.getStockQuotes().stream()
+			.map(AlphaVantageDao::mapStockQuoteAsStockTick);
   }
 
   public Stream<Stock> getLastXStocks1Min(String symbol, int nbValue) {

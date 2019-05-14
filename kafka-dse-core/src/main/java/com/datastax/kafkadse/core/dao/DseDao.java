@@ -7,23 +7,25 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
 import static com.datastax.oss.driver.api.querybuilder.relation.Relation.column;
 
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+
+import javax.annotation.PostConstruct;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+
 import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.kafkadse.core.conf.DseConstants;
-import com.datastax.kafkadse.core.domain.Stock;
 import com.datastax.kafkadse.core.domain.StockInfo;
 import com.datastax.kafkadse.core.domain.StockTick;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import java.util.Set;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository;
 
 @Repository
 public class DseDao implements DseConstants {
@@ -36,16 +38,12 @@ public class DseDao implements DseConstants {
 
   private PreparedStatement insertIntoStockInfos;
   private PreparedStatement insertIntoStockTicks;
-  private PreparedStatement insertIntoStocksMinute;
-  private PreparedStatement insertIntoStocksHour;
-
+ 
   @PostConstruct
   public void createOrUpdateSchema() {
     keyspace = dseSession.getKeyspace().orElseThrow(IllegalStateException::new);
     createTableStockInfosIfNotExists();
     createTableStockTicksIfNotExists();
-    createTableStocksIntervalIfNotExists(STOCKS_MINUTE);
-    createTableStocksIntervalIfNotExists(STOCKS_HOUR);
     prepareStatements();
     LOGGER.info("Connection established to DSE and schema successfully created or updated.");
   }
@@ -77,27 +75,6 @@ public class DseDao implements DseConstants {
     LOGGER.info(" + Table {} created in keyspace {} (if needed)", STOCKS_TICKS, keyspace);
   }
 
-  /**
-   * Creation of tables stocks_by*
-   *
-   * @param table the table name to create.
-   */
-  private void createTableStocksIntervalIfNotExists(CqlIdentifier table) {
-    dseSession.execute(
-        createTable(table)
-            .ifNotExists()
-            .withPartitionKey(SYMBOL, DataTypes.TEXT)
-            .withClusteringColumn(VALUE_DATE, DataTypes.TIMESTAMP)
-            .withColumn(OPEN, DataTypes.DOUBLE)
-            .withColumn(CLOSE, DataTypes.DOUBLE)
-            .withColumn(HIGH, DataTypes.DOUBLE)
-            .withColumn(LOW, DataTypes.DOUBLE)
-            .withColumn(VOLUME, DataTypes.BIGINT)
-            .withClusteringOrder(VALUE_DATE, ClusteringOrder.DESC)
-            .build());
-    LOGGER.info(" + Table {} created in keyspace {} (if needed)", table, keyspace);
-  }
-
   private void prepareStatements() {
     insertIntoStockInfos =
         dseSession.prepare(
@@ -114,28 +91,6 @@ public class DseDao implements DseConstants {
                 .value(VALUE_DATE, bindMarker(VALUE_DATE))
                 .value(VALUE, bindMarker(VALUE))
                 .build());
-    insertIntoStocksMinute =
-        dseSession.prepare(
-            insertInto(STOCKS_MINUTE)
-                .value(SYMBOL, bindMarker(SYMBOL))
-                .value(VALUE_DATE, bindMarker(VALUE_DATE))
-                .value(OPEN, bindMarker(OPEN))
-                .value(CLOSE, bindMarker(CLOSE))
-                .value(HIGH, bindMarker(HIGH))
-                .value(LOW, bindMarker(LOW))
-                .value(VOLUME, bindMarker(VOLUME))
-                .build());
-    insertIntoStocksHour =
-        dseSession.prepare(
-            insertInto(STOCKS_HOUR)
-                .value(SYMBOL, bindMarker(SYMBOL))
-                .value(VALUE_DATE, bindMarker(VALUE_DATE))
-                .value(OPEN, bindMarker(OPEN))
-                .value(CLOSE, bindMarker(CLOSE))
-                .value(HIGH, bindMarker(HIGH))
-                .value(LOW, bindMarker(LOW))
-                .value(VOLUME, bindMarker(VOLUME))
-                .build());
   }
 
   public CompletionStage<StockTick> saveTickerAsync(StockTick tick) {
@@ -148,38 +103,6 @@ public class DseDao implements DseConstants {
                 .setDouble(VALUE, tick.getValue())
                 .build())
         .thenApply(rs -> tick);
-  }
-
-  public CompletionStage<Stock> saveStock1MinAsync(Stock quote) {
-    return dseSession
-        .executeAsync(
-            insertIntoStocksMinute
-                .boundStatementBuilder()
-                .setString(SYMBOL, quote.getSymbol())
-                .setInstant(VALUE_DATE, quote.getValueDate())
-                .setDouble(OPEN, quote.getOpen())
-                .setDouble(CLOSE, quote.getClose())
-                .setDouble(HIGH, quote.getHigh())
-                .setDouble(LOW, quote.getLow())
-                .setDouble(VOLUME, quote.getVolume())
-                .build())
-        .thenApply(rs -> quote);
-  }
-
-  public CompletionStage<Stock> saveStock1HourAsync(Stock quote) {
-    return dseSession
-        .executeAsync(
-            insertIntoStocksHour
-                .boundStatementBuilder()
-                .setString(SYMBOL, quote.getSymbol())
-                .setInstant(VALUE_DATE, quote.getValueDate())
-                .setDouble(OPEN, quote.getOpen())
-                .setDouble(CLOSE, quote.getClose())
-                .setDouble(HIGH, quote.getHigh())
-                .setDouble(LOW, quote.getLow())
-                .setDouble(VOLUME, quote.getVolume())
-                .build())
-        .thenApply(rs -> quote);
   }
 
   public CompletionStage<StockInfo> saveStockInfoAsync(StockInfo info) {
