@@ -16,7 +16,7 @@ Without the connector you must start the `consumer` :
 
 <img src="./pics/kafkadse-1.png" height="200" />
 
-Without the connector only start `producer` and `webui` like the following :
+With the connector only start `producer` and `webui` like the following :
 
 <img src="./pics/kafkadse-2.png" height="200" />
 
