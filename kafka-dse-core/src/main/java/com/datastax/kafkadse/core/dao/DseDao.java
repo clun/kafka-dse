@@ -7,17 +7,6 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
 import static com.datastax.oss.driver.api.querybuilder.relation.Relation.column;
 
-import java.util.Set;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
-
-import javax.annotation.PostConstruct;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository;
-
 import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.kafkadse.core.conf.DseConstants;
 import com.datastax.kafkadse.core.domain.StockInfo;
@@ -26,6 +15,14 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public class DseDao implements DseConstants {
@@ -38,7 +35,7 @@ public class DseDao implements DseConstants {
 
   private PreparedStatement insertIntoStockInfos;
   private PreparedStatement insertIntoStockTicks;
- 
+
   @PostConstruct
   public void createOrUpdateSchema() {
     keyspace = dseSession.getKeyspace().orElseThrow(IllegalStateException::new);

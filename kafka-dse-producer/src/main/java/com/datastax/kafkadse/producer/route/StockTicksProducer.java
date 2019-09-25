@@ -30,14 +30,11 @@ public class StockTicksProducer implements Processor, DseConstants {
   /** Internal logger. */
   private final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
 
-  @Autowired 
-  protected DseDao dseDao;
+  @Autowired protected DseDao dseDao;
 
-  @Autowired 
-  protected CsvDao csvDao;
+  @Autowired protected CsvDao csvDao;
 
-  @Autowired 
-  protected AlphaVantageDao alphaVantageDao;
+  @Autowired protected AlphaVantageDao alphaVantageDao;
 
   @Autowired
   @Qualifier("producer.mapper")
@@ -59,11 +56,11 @@ public class StockTicksProducer implements Processor, DseConstants {
   /** Initialize connection to API AlphaVantage */
   @PostConstruct
   public void init() {
-	// Loading Data into reference table (CSV->DSE)
-	csvDao.readStockInfosFromCsv().forEach(dseDao::saveStockInfoAsync);
-	LOGGER.info(" + Table {} filled with symbols found in CSV.", STOCKS_INFOS);
-	
-	// Initialize with Dse Data
+    // Loading Data into reference table (CSV->DSE)
+    csvDao.readStockInfosFromCsv().forEach(dseDao::saveStockInfoAsync);
+    LOGGER.info(" + Table {} filled with symbols found in CSV.", STOCKS_INFOS);
+
+    // Initialize with Dse Data
     Set<String> symbols = dseDao.getSymbolsNYSE();
     LOGGER.info("Symbols list retrieved from DSE. ({} items)", symbols.size());
 
@@ -72,7 +69,6 @@ public class StockTicksProducer implements Processor, DseConstants {
             .getCurrentStockTicks(symbols)
             .collect(Collectors.toMap(StockTick::getSymbol, Function.identity()));
 
-    
     LOGGER.info("Stocks initial prices retrieved from alphaVantage REST API.");
   }
 
