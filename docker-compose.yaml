@@ -40,12 +40,12 @@ services:
       - "9042:9042"
       - "8983:8983"
       - "8182:8182"
-    depends_on:
-       - opscenter  
+    #depends_on:
+    #   - opscenter  
     environment:
       - DS_LICENSE=accept
       - DC=DC1
-      - JVM_EXTRA_OPTS=-Xmx1g -Xms1g
+      - JVM_EXTRA_OPTS=-Xmx2g -Xms2g
       - NUM_TOKENS=32
     cap_add:
       - IPC_LOCK
@@ -69,18 +69,30 @@ services:
   # ------------------------------------------------
   # OpsCenter 6.7.0
   # ------------------------------------------------
-  opscenter:
-    image: "datastax/dse-opscenter:6.7.0"
+  #opscenter:
+  #  image: "datastax/dse-opscenter:6.7.0"
+  #  ports:
+  #    - 8888:8888
+  #  environment:
+  #    - DS_LICENSE=accept    
+  
+  # Message broker
+  kafka:
+    image: confluentinc/cp-kafka:5.1.0
+    depends_on:
+      - zookeeper
     ports:
-      - 8888:8888
+      - 9092:9092
     environment:
-      - DS_LICENSE=accept    
-  
-  
-  # ------------------------------------------------
-  # KafkaHQ OSS WebUI
-  # https://github.com/tchiotludo/kafkahq
-  # ------------------------------------------------
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CREATE_TOPICS: "stocks_ticks:1:1"
+    extra_hosts:
+      - "moby:127.0.0.1"
       
   kafkahq:
     image: tchiotludo/kafkahq

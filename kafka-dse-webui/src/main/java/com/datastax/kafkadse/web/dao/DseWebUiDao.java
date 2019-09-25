@@ -5,14 +5,6 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 import static com.datastax.oss.driver.api.querybuilder.relation.Relation.column;
 
-import java.time.Instant;
-import java.util.Objects;
-
-import javax.annotation.PostConstruct;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository;
-
 import com.datastax.dse.driver.api.core.DseSession;
 import com.datastax.kafkadse.core.conf.DseConstants;
 import com.datastax.kafkadse.core.domain.StockInfo;
@@ -21,7 +13,11 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-
+import java.time.Instant;
+import java.util.Objects;
+import javax.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -71,7 +67,6 @@ public class DseWebUiDao implements DseConstants {
           .limit(500)
           .build();
 
-  
   /** Hold Connectivity to DSE. */
   @Autowired protected DseSession dseSession;
 
@@ -80,7 +75,7 @@ public class DseWebUiDao implements DseConstants {
   private PreparedStatement findStockTickById;
   private PreparedStatement findFirst100StockTicksBySymbol;
   private PreparedStatement findFirst500StockTicks;
-  
+
   @PostConstruct
   public void prepareStatements() {
     findStockInfoById = dseSession.prepare(FIND_STOCK_INFO_BY_ID);
