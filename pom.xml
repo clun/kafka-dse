@@ -34,7 +34,7 @@
     <!-- DataStax Java-Driver -->
     <dse-java-driver.version>1.6.8</dse-java-driver.version>
     <!-- ThirdParty library -->
-    <spring.version>5.0.8.RELEASE</spring.version>
+    <spring.version>5.2.22.RELEASE</spring.version>
     <spring-boot.version>2.0.3.RELEASE</spring-boot.version>
     <logback.version>1.2.3</logback.version>
     <jackson-dataformat.version>2.9.6</jackson-dataformat.version>
